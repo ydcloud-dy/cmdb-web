@@ -1,10 +1,30 @@
 <template>
   <div>
-    <el-table ref="multipleTable" :data="tableData" style="width: 100%" tooltip-effect="dark" row-key="ID" @sort-change="sortChange" @selection-change="handleSelectionChange">
+    <el-table
+        ref="multipleTable"
+        :data="tableData"
+        style="width: 100%"
+        tooltip-effect="dark"
+        row-key="ID"
+        @sort-change="sortChange"
+        @selection-change="handleSelectionChange"
+    >
       <el-table-column type="selection" width="55" />
       <el-table-column align="left" label="ID" prop="ID" sortable="custom" />
       <el-table-column align="left" label="名称" prop="name" sortable="custom" />
-      <el-table-column align="left" label="环境标识" prop="key" />
+
+      <!-- 环境标识列 -->
+      <el-table-column align="left" label="环境标识" prop="key">
+        <template #default="scope">
+          <el-tag
+              :style="getEnvTagStyle(scope.row.key)"
+              effect="plain"
+          >
+            {{ scope.row.key }}
+          </el-tag>
+        </template>
+      </el-table-column>
+
       <el-table-column align="left" label="描述信息" prop="desc" />
       <el-table-column align="left" label="创建时间" prop="CreatedAt" :formatter="formatDate" />
 
@@ -47,6 +67,20 @@ const formatDate = (row, column, cellValue) => {
   return cellValue ? dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss') : ''
 }
 
+// 固定颜色数组
+const tagColors = [
+  { backgroundColor: '#fde2e2', color: '#f56c6c', borderColor: '#f56c6c' },
+  { backgroundColor: '#e7f3fe', color: '#409eff', borderColor: '#409eff' },
+  { backgroundColor: '#e1f7e7', color: '#67c23a', borderColor: '#67c23a' },
+  { backgroundColor: '#fff2cc', color: '#e6a23c', borderColor: '#e6a23c' }
+]
+
+// 获取环境标签的自定义样式
+const getEnvTagStyle = (key) => {
+  const index = Math.abs(key.length % tagColors.length)  // 通过长度或哈希来分配颜色
+  return tagColors[index]
+}
+
 // 搜索排序
 const searchInfo = ref({})
 const sortChange = ({ prop, order }) => {
@@ -83,5 +117,4 @@ const handleSelectionChange = (value) => {
 </script>
 
 <style scoped>
-
 </style>

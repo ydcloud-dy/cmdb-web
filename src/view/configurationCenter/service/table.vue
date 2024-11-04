@@ -33,7 +33,8 @@
 
       <el-table-column align="left" label="操作">
         <template #default="scope">
-          <el-button size="small" type="primary" link icon="edit" @click="handleUpdate(scope.row)">操作</el-button>
+          <el-button size="small" type="primary" link icon="edit" @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button size="small" type="primary"  link icon="promotion"  @click="handleTest(scope.row)">测试</el-button> <!-- 新增的测试按钮 -->
           <el-popover v-model="scope.row.visible" placement="top">
             <p>确定要删除吗？</p>
             <div style="text-align: right; margin-top: 8px;">
@@ -55,7 +56,7 @@ import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { toSQLLine } from '@/utils/stringFun'
 
-const emit = defineEmits(['update', 'delete', 'search', 'region'])
+const emit = defineEmits(['update', 'delete', 'search', 'region','test'])
 defineProps({
   tableData: {
     default: function() {
@@ -91,6 +92,9 @@ const handleUpdate = (value) => {
 // 同步Region
 const handleUpdateRegion = (value) => {
   emit('region', value)
+}
+const handleTest = (value) => {
+  emit('test', value)
 }
 
 // 删除

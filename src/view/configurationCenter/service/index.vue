@@ -26,7 +26,7 @@
 <!--        </el-popover>-->
       </div>
       <div v-if="tableData">
-        <TableBlock :table-data="tableData" @update="handleUpdate" @search="handlesortChange" @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
+        <TableBlock :table-data="tableData" @update="handleUpdate" @search="handlesortChange" @test="handleTest"  @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
       </div>
     </div>
     <div class="dycloud-pagination">
@@ -69,7 +69,7 @@ import {
   updateService,
   getServiceList,
   describeService,
-  deleteServiceByIds
+  deleteServiceByIds, TestService
 } from '@/api/configurationCenter/service'
 import FormBlock from './form.vue'
 import TableBlock from './table.vue'
@@ -291,7 +291,19 @@ const enterDialog = async (value) => {
     handleOptions(res);
   }
 };
-
+// 处理 test 事件的函数
+const handleTest = async (value) => {
+  console.log('测试:', value)
+  const res = await TestService(value)
+  if (res.code === 0) {
+    ElMessage({
+      type: 'success',
+      message: res.data
+    })
+  }
+  console.log(res)
+  // 在这里添加测试逻辑
+}
 
 // 创建
 const openDialog = () => {

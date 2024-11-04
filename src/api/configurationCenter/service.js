@@ -56,3 +56,13 @@ export const deleteServiceByIds = (data) => {
         }
     })
 }
+export const TestService = (data) => {
+    return service({
+        url: '/cicd/service/verify',
+        method: 'post',
+        data,
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}

@@ -75,7 +75,7 @@ export default {
 </script>
 
 <script setup>
-import { ref,watchEffect } from 'vue'
+import { ref,watchEffect,watch } from 'vue'
 const emit = defineEmits(['close', 'enter'])
 const props = defineProps({
   form: {
@@ -101,7 +101,12 @@ const formData = ref({
 watchEffect(() => {
   formData.value = { ...props.form };
 });
-
+// 当选择的 type 为 0（Kubernetes）时，默认将 authType 设置为 "config"
+watch(() => formData.value.type, (newType) => {
+  if (newType === 0) {
+    formData.value.authType = 'config'
+  }
+})
 const rules = ref({
   name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择配置类型', trigger: 'change' }],
