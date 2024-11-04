@@ -4,8 +4,31 @@
       <el-table-column type="selection" width="55" />
       <el-table-column align="left" label="ID" prop="ID" sortable="custom" />
       <el-table-column align="left" label="名称" prop="name" sortable="custom" />
-      <el-table-column align="left" label="环境标识" prop="key" />
+
+      <!-- 类型列，使用插槽实现样式化标签显示 -->
+      <el-table-column align="left" label="类型" prop="type">
+        <template #default="scope">
+          <el-tag
+              v-if="scope.row.type === 1"
+              type="success"
+              effect="plain"
+              style="color: green; background-color: #eaffea; border-color: #b2f5b2"
+          >
+            registry
+          </el-tag>
+          <el-tag
+              v-else
+              type="info"
+              effect="plain"
+              style="color: blue; background-color: #e8f3ff; border-color: #c2e1ff"
+          >
+            kubernetes
+          </el-tag>
+        </template>
+      </el-table-column>
+
       <el-table-column align="left" label="描述信息" prop="desc" />
+      <el-table-column align="left" label="创建者" prop="created_by" />
       <el-table-column align="left" label="创建时间" prop="CreatedAt" :formatter="formatDate" />
 
       <el-table-column align="left" label="操作">
@@ -83,5 +106,4 @@ const handleSelectionChange = (value) => {
 </script>
 
 <style scoped>
-
 </style>

@@ -14,16 +14,16 @@
     <div class="dycloud-table-box">
       <div class="dycloud-btn-list">
         <el-button size="small" type="primary" icon="plus" @click="openDialog('addApi')">新增</el-button>
-        <el-popover v-model="deleteVisible" placement="top" width="160">
-          <p>确定要删除吗？</p>
-          <div style="text-align: right; margin-top: 8px;">
-            <el-button size="small" type="primary" link @click="deleteVisible = false">取消</el-button>
-            <el-button size="small" type="primary" @click="onDelete">确定</el-button>
-          </div>
-          <template #reference>
-            <el-button icon="delete" size="small" :disabled="!clusters.length" style="margin-left: 10px;" @click="deleteVisible = true">删除</el-button>
-          </template>
-        </el-popover>
+<!--        <el-popover v-model="deleteVisible" placement="top" width="160">-->
+<!--          <p>确定要删除吗？</p>-->
+<!--          <div style="text-align: right; margin-top: 8px;">-->
+<!--            <el-button size="small" type="primary" link @click="deleteVisible = false">取消</el-button>-->
+<!--            <el-button size="small" type="primary" @click="onDelete">确定</el-button>-->
+<!--          </div>-->
+<!--          <template #reference>-->
+<!--            <el-button icon="delete" size="small" :disabled="!clusters.length" style="margin-left: 10px;" @click="deleteVisible = true">删除</el-button>-->
+<!--          </template>-->
+<!--        </el-popover>-->
       </div>
       <div v-if="tableData">
         <TableBlock :table-data="tableData" @update="handleUpdate" @search="handlesortChange" @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
@@ -63,15 +63,14 @@ export default {
 </script>
 
 <script setup>
-import { cloudplatformlist, cloudplatformById, cloudplatformCreate, cloudplatformUpdate, cloudplatformDelete, cloudplatformDeleteByIds } from '@/api/cloudCmdb/cloud_platform'
 import {
-  createEnv,
-  deleteEnv,
-  updateEnv,
-  getEnvList,
-  describeEnv,
-  deleteEnvByIds
-} from '@/api/configurationCenter/environment'
+  createService,
+  deleteService,
+  updateService,
+  getServiceList,
+  describeService,
+  deleteServiceByIds
+} from '@/api/configurationCenter/service'
 import FormBlock from './form.vue'
 import TableBlock from './table.vue'
 import { ref } from 'vue'
@@ -119,7 +118,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getEnvList({ page: page.value, pageSize: pageSize.value, keyword:searchInfo.value.name })
+  const table = await getServiceList({ page: page.value, pageSize: pageSize.value, keyword: searchInfo.value.name })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -134,14 +133,32 @@ getTableData()
 const dialogFormVisible = ref(false)
 const type = ref('')
 const handleUpdate = async(row) => {
-  const res = await describeEnv(  row.ID )
+  const res = await describeService(row.ID)
   type.value = 'update'
   title.value = '更新'
   if (res.code === 0) {
-    form.value = res.data
+    const data = res.data
+
+    // 将查询结果中的数据赋值到表单
+    form.value = {
+      ID: data.ID,
+      name: data.name,
+      desc: data.desc,
+      type: data.type,
+      authType: data.type === 0 ? (data.config.conf ? 'config' : 'token') : null,
+      conf: data.type === 0 && data.config.conf ? data.config.conf : '',
+      url: data.type === 0 && data.config.url ? data.config.url : '',
+      kubeToken: data.type === 0 && data.config.token ? data.config.token : '',
+      registryUrl: data.type === 1 ? data.config.url : '',
+      username: data.type === 1 ? data.config.username : '',
+      password: data.type === 1 ? data.config.password : '',
+      isHttps: data.type === 1 ? data.config.isHttps : false,
+    }
+
     dialogFormVisible.value = true
   }
 }
+
 
 // 同步Region
 const handleUpdateRegion = async(row) => {
@@ -164,7 +181,7 @@ const closeDialog = () => {
 // 删除数据
 const handleDelete = async(row) => {
   row.visible = false
-  const res = await deleteEnv(  row.ID )
+  const res = await deleteService(  row.ID )
   if (res.code === 0) {
     ElMessage({
       type: 'success',
@@ -185,7 +202,7 @@ const handleSelectionChange = (val) => {
 // 批量删除
 const onDelete = async() => {
   const ids = clusters.value.map(item => item.ID)
-  const res = await deleteEnvByIds({ ids:ids })
+  const res = await deleteServiceByIds({ ids:ids })
   if (res.code === 0) {
     ElMessage({
       type: 'success',
@@ -214,27 +231,67 @@ const handleOptions = async(res) => {
 }
 
 // 提交数据
-const enterDialog = async(value) => {
-  console.log(value)
-  console.log("================================")
-  let res
-  switch (type.value) {
-    case 'create':
-      res = await createEnv(value)
-      break
-    case 'update':
-      res = await updateEnv(value)
-      break
-    default:
-      res = await createEnv(value)
-      break
+const enterDialog = async (value) => {
+  console.log(value);
+  console.log("================================");
+
+  // 转换 `type` 字段值和 `config` 数据结构
+  if (value.type === "kubernetes") {
+    value.type = 0;
+
+    // 处理 Kubernetes 配置，生成符合后端格式的 `config` 对象
+    value.config = {
+      type: 0,
+      // 根据 `authType` 的不同，配置 `config` 内容
+      conf: value.authType === "config" ? value.conf : undefined,
+      url: value.authType === "token" ? value.url : undefined,
+      token: value.authType === "token" ? value.kubeToken : undefined,
+    };
+    // 移除不必要的字段
+    delete value.conf;
+    delete value.url;
+    delete value.kubeToken;
+  } else if (value.type === "registry") {
+    value.type = 1;
+
+    // 处理 Registry 配置
+    value.config = {
+      url: value.registryUrl,
+      username: value.username,
+      password: value.password,
+      isHttps: value.isHttps,
+    };
+    // 移除不必要的字段
+    delete value.registryUrl;
+    delete value.username;
+    delete value.password;
+    delete value.isHttps;
   }
 
-  if (res.code === 0) {
-    closeDialog()
-    handleOptions(res)
+  // 删除前端不需要的临时字段
+  delete value.authType;
+
+  // 调用 API，根据 type 选择操作
+  let res;
+  switch (type.value) {
+    case "create":
+      res = await createService(value);
+      break;
+    case "update":
+      res = await updateService(value);
+      break;
+    default:
+      res = await createService(value);
+      break;
   }
-}
+
+  // 处理 API 响应
+  if (res.code === 0) {
+    closeDialog();
+    handleOptions(res);
+  }
+};
+
 
 // 创建
 const openDialog = () => {

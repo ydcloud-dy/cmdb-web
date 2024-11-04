@@ -36,6 +36,7 @@
         "codemirror-editor-vue3": "^2.8.0",
         "core-js": "^3.38.1",
         "crypto-js": "^4.2.0",
+        "dayjs": "^1.11.13",
         "default-passive-events": "^2.0.0",
         "echarts": "^5.5.1",
         "element-plus": "^2.8.1",
