@@ -30,6 +30,8 @@
 
       <el-table-column align="left" label="操作">
         <template #default="scope">
+          <el-button size="small" type="primary" link icon="edit" @click="handleDetail(scope.row)">详情</el-button>
+
           <el-button size="small" type="primary" link icon="edit" @click="handleUpdate(scope.row)">操作</el-button>
           <el-popover v-model="scope.row.visible" placement="top">
             <p>确定要删除吗？</p>
@@ -52,7 +54,7 @@ import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { toSQLLine } from '@/utils/stringFun'
 
-const emit = defineEmits(['update', 'delete', 'search', 'region'])
+const emit = defineEmits(['update', 'delete', 'search', 'region','detail'])
 defineProps({
   tableData: {
     default: function() {
@@ -97,6 +99,9 @@ const sortChange = ({ prop, order }) => {
 // 更新
 const handleUpdate = (value) => {
   emit('update', value)
+}
+const handleDetail = (value) => {
+  emit('detail', value)
 }
 
 // 同步Region

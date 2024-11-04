@@ -28,7 +28,7 @@
       </el-table-column>
 
       <el-table-column align="left" label="描述信息" prop="desc" />
-      <el-table-column align="left" label="创建者" prop="created_by" />
+      <el-table-column align="left" label="创建者" prop="CreatedName" />
       <el-table-column align="left" label="创建时间" prop="CreatedAt" :formatter="formatDate" />
 
       <el-table-column align="left" label="操作">

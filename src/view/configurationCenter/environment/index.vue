@@ -26,7 +26,7 @@
         </el-popover>
       </div>
       <div v-if="tableData">
-        <TableBlock :table-data="tableData" @update="handleUpdate" @search="handlesortChange" @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
+        <TableBlock :table-data="tableData" @update="handleUpdate" @search="handlesortChange" @detail="handleDetail" @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
       </div>
     </div>
     <div class="dycloud-pagination">
@@ -53,6 +53,28 @@
       </el-dialog>
     </div>
   </div>
+  <el-drawer destroy-on-close size="600" v-model="detailShow" :show-close="true" :before-close="closeDetailShow">
+    <el-descriptions :column="1" border>
+      <el-descriptions-item label="环境名称">
+        {{ detailFrom.name }}
+      </el-descriptions-item>
+      <el-descriptions-item label="环境标识">
+        {{ detailFrom.key }}
+      </el-descriptions-item>
+      <el-descriptions-item label="描述信息">
+        {{ detailFrom.desc }}
+      </el-descriptions-item>
+      <el-descriptions-item label="创建人">
+        {{ detailFrom.CreatedName }}
+      </el-descriptions-item>
+      <el-descriptions-item label="创建时间">
+        {{ formatDate(detailFrom.CreatedAt) }}
+      </el-descriptions-item>
+      <el-descriptions-item label="修改时间">
+        {{ formatDate(detailFrom.UpdatedAt) }}
+      </el-descriptions-item>
+    </el-descriptions>
+  </el-drawer>
 </template>
 
 <script>
@@ -63,7 +85,6 @@ export default {
 </script>
 
 <script setup>
-import { cloudplatformlist, cloudplatformById, cloudplatformCreate, cloudplatformUpdate, cloudplatformDelete, cloudplatformDeleteByIds } from '@/api/cloudCmdb/cloud_platform'
 import {
   createEnv,
   deleteEnv,
@@ -77,6 +98,7 @@ import TableBlock from './table.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
+import dayjs from 'dayjs'
 
 const form = ref({})
 const page = ref(1)
@@ -92,13 +114,33 @@ const regions = ref([])
 const onReset = () => {
   searchInfo.value = {}
 }
-
+const formatDate = (date) => {
+  return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
 // 排序
 const handlesortChange = (value) => {
   searchInfo.value = value
   getTableData()
 }
+const detailShow = ref(false)
+const detailFrom = ref({})
 
+const handleDetail = async (value) => {
+  console.log(value)
+  const res = await describeEnv( value.ID)
+  if (res.code === 0) {
+    detailFrom.value = res.data
+    openDetailShow()
+  }
+}
+const closeDetailShow = () => {
+  detailShow.value = false
+  detailFrom.value = {}
+}
+
+const openDetailShow = () => {
+  detailShow.value = true
+}
 // 提交搜索
 const onSubmit = () => {
   page.value = 1
