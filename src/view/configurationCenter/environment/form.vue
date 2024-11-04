@@ -1,26 +1,14 @@
 <template>
-  <div style="overflow: hidden;width: 100%;">
-    <el-form ref="FormBlock" :model="formData" :rules="rules" label-width="150px">
+  <div style="overflow: hidden; width: 100%; max-width: 600px; margin-left: 20px;">
+    <el-form ref="FormBlock" :model="formData" :rules="rules" label-width="100px">
       <el-form-item label="名称" prop="name">
         <el-input v-model="formData.name" autocomplete="off" />
       </el-form-item>
-      <el-form-item label="厂商" prop="platform">
-        <el-radio-group v-model="formData.platform">
-          <el-radio label="aliyun">阿里云</el-radio>
-          <el-radio label="tencent">腾讯云</el-radio>
-          <el-radio label="huawei">华为云</el-radio>
-        </el-radio-group>
+      <el-form-item label="标识" prop="key">
+        <el-input v-model="formData.key" autocomplete="off" />
       </el-form-item>
-      <el-form-item label="AccessKey ID" prop="access_key_id">
-        <el-input v-model="formData.access_key_id" type="password" show-password autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="AccessKey Secret" prop="access_key_secret">
-        <el-input v-model="formData.access_key_secret" type="password" show-password  autocomplete="off" />
-      </el-form-item>
-      <el-form-item v-show="typeData !== 'create'" label="可用区">
-        <span v-for="(region,index) in regionsData" :key="index">
-              <span class="margin-right label-custom" type="info">  {{ region.name }}</span>
-        </span>
+      <el-form-item label="备注" prop="desc">
+        <el-input v-model="formData.desc" type="textarea" autocomplete="off" />
       </el-form-item>
     </el-form>
     <div class="dialog-footer" align="right">
@@ -47,6 +35,7 @@ export default {
   }
 }
 </script>
+
 <script setup>
 import { ref } from 'vue'
 const emit = defineEmits(['close', 'enter'])
@@ -57,39 +46,18 @@ const props = defineProps({
     },
     type: Object
   },
-  regions: {
-    default: function() {
-      return []
-    },
-    type: Array
-  },
-  type: {
-    default: function() {
-      return []
-    },
-    type: String
-  }
 })
 
 const rules = ref({
-  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-  platform: [{ required: true, message: '请选择厂商', trigger: 'blur' }],
-  access_key_id: [{ required: true, message: '请输入AccessKey ID', trigger: 'blur' }],
-  access_key_secret: [{ required: true, message: '请输入AccessKey Secret', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入环境名称，以中文命名', trigger: 'blur' }],
+  key: [{ required: true, message: '请输入环境标识，只能以字母命名', trigger: 'blur' }],
+  desc: [{ required: false, message: '请输入备注信息', trigger: 'blur' }],
 })
 
 // 表单数据初始化
 const formData = ref({})
-const regionsData = ref([])
-const typeData = ref('')
-const prometheusTypeStatus = ref(false)
 const GetFormData = () => {
   formData.value = props.form
-  regionsData.value = props.regions
-  typeData.value = props.type
-  if (formData.value.prometheus_auth_type === 2) {
-    prometheusTypeStatus.value = true
-  }
 }
 
 GetFormData()
@@ -110,21 +78,9 @@ const enterDialog = async() => {
   })
 }
 </script>
+
 <style scoped>
-.label-custom {
-  margin-right: 8px;
-  margin-bottom: 8px;
-  display: inline-block;
-  padding: 0 8px;
-  cursor: pointer;
-  height: 24px;
-  line-height: 24px;
-  border-radius: 12px;
-  -webkit-border-radius: 12px;
-  -moz-border-radius: 12px;
-  -ms-border-radius: 12px;
-  -o-border-radius: 12px;
-  border: 1px solid #bcbdbf;
-  color: var(--el-color-primary);
+.dialog-footer {
+  margin-top: 20px;
 }
 </style>

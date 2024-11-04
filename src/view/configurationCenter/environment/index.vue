@@ -64,6 +64,14 @@ export default {
 
 <script setup>
 import { cloudplatformlist, cloudplatformById, cloudplatformCreate, cloudplatformUpdate, cloudplatformDelete, cloudplatformDeleteByIds } from '@/api/cloudCmdb/cloud_platform'
+import {
+  createEnv,
+  deleteEnv,
+  updateEnv,
+  getEnvList,
+  describeEnv,
+  deleteEnvByIds
+} from '@/api/configurationCenter/environment'
 import FormBlock from './form.vue'
 import TableBlock from './table.vue'
 import { ref } from 'vue'
@@ -111,7 +119,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await cloudplatformlist({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const table = await getEnvList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -126,12 +134,11 @@ getTableData()
 const dialogFormVisible = ref(false)
 const type = ref('')
 const handleUpdate = async(row) => {
-  const res = await cloudplatformById({ id: row.id })
+  const res = await describeEnv(  row.ID )
   type.value = 'update'
   title.value = '更新'
   if (res.code === 0) {
-    form.value = res.data.cloud_platform
-    regions.value = res.data.regions
+    form.value = res.data
     dialogFormVisible.value = true
   }
 }
@@ -157,7 +164,7 @@ const closeDialog = () => {
 // 删除数据
 const handleDelete = async(row) => {
   row.visible = false
-  const res = await cloudplatformDelete({ id: row.id })
+  const res = await deleteEnv(  row.ID )
   if (res.code === 0) {
     ElMessage({
       type: 'success',
@@ -177,8 +184,8 @@ const handleSelectionChange = (val) => {
 
 // 批量删除
 const onDelete = async() => {
-  const ids = clusters.value.map(item => item.id)
-  const res = await cloudplatformDeleteByIds({ ids })
+  const ids = clusters.value.map(item => item.ID)
+  const res = await deleteEnvByIds({ ids:ids })
   if (res.code === 0) {
     ElMessage({
       type: 'success',
@@ -208,16 +215,18 @@ const handleOptions = async(res) => {
 
 // 提交数据
 const enterDialog = async(value) => {
+  console.log(value)
+  console.log("================================")
   let res
   switch (type.value) {
     case 'create':
-      res = await cloudplatformCreate(value)
+      res = await createEnv(value)
       break
     case 'update':
-      res = await cloudplatformUpdate(value)
+      res = await updateEnv(value)
       break
     default:
-      res = await cloudplatformCreate(value)
+      res = await createEnv(value)
       break
   }
 

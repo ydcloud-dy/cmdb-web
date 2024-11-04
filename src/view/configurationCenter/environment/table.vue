@@ -2,13 +2,15 @@
   <div>
     <el-table ref="multipleTable" :data="tableData" style="width: 100%" tooltip-effect="dark" row-key="ID" @sort-change="sortChange" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
-      <el-table-column align="left" label="ID" prop="id" sortable="custom" />
+      <el-table-column align="left" label="ID" prop="ID" sortable="custom" />
       <el-table-column align="left" label="名称" prop="name" sortable="custom" />
-      <el-table-column align="left" label="厂商" prop="platform" />
+      <el-table-column align="left" label="环境标识" prop="key" />
+      <el-table-column align="left" label="描述信息" prop="desc" />
+      <el-table-column align="left" label="创建时间" prop="created_at" />
+
       <el-table-column align="left" label="操作">
         <template #default="scope">
-          <el-button size="small" type="primary" link icon="edit" @click="handleUpdate(scope.row)">变更</el-button>
-          <el-button size="small" type="primary" link icon="refresh" @click="handleUpdateRegion(scope.row)">Region同步</el-button>
+          <el-button size="small" type="primary" link icon="edit" @click="handleUpdate(scope.row)">操作</el-button>
           <el-popover v-model="scope.row.visible" placement="top">
             <p>确定要删除吗？</p>
             <div style="text-align: right; margin-top: 8px;">
