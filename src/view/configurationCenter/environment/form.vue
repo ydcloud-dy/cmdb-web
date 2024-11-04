@@ -47,6 +47,9 @@ const props = defineProps({
     type: Object
   },
 })
+watchEffect(() => {
+  formData.value = { ...props.form };
+});
 
 const rules = ref({
   name: [{ required: true, message: '请输入环境名称，以中文命名', trigger: 'blur' }],
