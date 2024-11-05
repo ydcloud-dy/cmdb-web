@@ -1,6 +1,6 @@
 <template>
   <div style="overflow: hidden; width: 100%; max-width: 600px; margin-left: 20px;">
-    <el-form ref="FormBlock" :model="props.form" :rules="rules" label-width="120px">
+    <el-form ref="FormBlock" :model="formData" :rules="rules" label-width="120px">
       <!-- 代码源 -->
       <el-form-item label="代码源" prop="repo_id">
         <el-select v-model="formData.repo_id" placeholder="请选择代码源" @change="fetchRepositoryPaths">
@@ -72,7 +72,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,watchEffect } from 'vue';
 import { getSourceCodeList } from "@/api/configurationCenter/codeSource";
 import { GetGitProjectsByRepoId } from "@/api/cicd/applications";
 import { getBuildEnvList } from "@/api/configurationCenter/buildEnv";
@@ -93,7 +93,9 @@ const emit = defineEmits(['close', 'enter']);
 //   compile_env_id: ''
 // });
 const formData = ref(props.form);
-
+watchEffect(() => {
+  formData.value = { ...props.form };
+});
 
 const codeSources = ref([]); // 存储代码源选项
 const repositoryPaths = ref([]); // 存储仓库路径选项
@@ -106,9 +108,21 @@ onMounted(async () => {
   if (!props.form.dockerfile) {
     props.form.dockerfile = 'Dockerfile';  // 默认 Dockerfile 名称
   }
+
+  // 获取代码源列表
   const response = await getSourceCodeList({ page: 1, pageSize: 1000 });
   if (response.code === 0) {
     codeSources.value = response.data.list;
+
+    console.log(formData.value)
+    console.log(codeSources.value)
+    // 检查是否存在匹配的 repo_id
+    const matchedSource = codeSources.value.find(source => source.ID === formData.value.repo_id);
+    if (matchedSource) {
+      formData.value.repo_id = matchedSource.ID;
+    } else {
+      console.warn("未找到匹配的代码源");
+    }
   } else {
     console.error("获取代码源失败", response.msg);
   }

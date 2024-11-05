@@ -34,10 +34,12 @@
             autocomplete="off"
         />
       </el-form-item>
+
       <!-- 用户名 (仅 GitLab 私有仓库显示) -->
       <el-form-item v-if="formData.type === 3 && formData.repositoryType === 'private'" label="用户名" prop="username">
         <el-input v-model="formData.username" placeholder="请输入GitLab用户名" autocomplete="off" />
       </el-form-item>
+
       <!-- Token (仅私有仓库显示) -->
       <el-form-item v-if="formData.repositoryType === 'private'" label="Token" prop="token">
         <el-input v-model="formData.token" placeholder="请输入代码源Token" autocomplete="off" />
@@ -56,20 +58,12 @@
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue';
+import { ref, watchEffect, watch } from 'vue';
 const emit = defineEmits(['close', 'enter']);
 const props = defineProps({
   form: {
     default: () => ({}),
     type: Object
-  },
-  isUrlDisabled: {
-    type: Boolean,
-    default: false
-  },
-  urlPlaceholder: {
-    type: String,
-    default: '请输入地址'
   }
 });
 
@@ -83,9 +77,26 @@ const formData = ref({
   desc: ''
 });
 
+const urlPlaceholder = ref('请输入地址');
+const isUrlDisabled = ref(false);
+
 // 监听 props.form 的变化并同步到 formData
 watchEffect(() => {
   formData.value = { ...props.form };
+});
+
+// 根据配置类型动态设置默认 URL 和禁用状态
+watch(() => formData.value.type, (newType) => {
+  if (newType === 4) { // GitHub
+    formData.value.url = 'https://github.com';
+    isUrlDisabled.value = true;
+  } else if (newType === 5) { // Gitee
+    formData.value.url = 'https://gitee.com';
+    isUrlDisabled.value = true;
+  } else {
+    formData.value.url = '';
+    isUrlDisabled.value = false;
+  }
 });
 
 // 表单验证规则

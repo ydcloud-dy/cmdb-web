@@ -22,31 +22,26 @@
 export default {
   name: 'FormBlock',
   emits: {
-    close: () => {
-      return true
-    },
-    enter: (value) => {
-      if (value.length === 1) {
-        return true
-      } else {
-        return false
-      }
-    },
+    close: () => true,
+    enter: (value) => value && typeof value === 'object' && Object.keys(value).length > 0,
   }
 }
 </script>
 
 <script setup>
-import { ref } from 'vue'
-const emit = defineEmits(['close', 'enter'])
+import { ref, watchEffect } from 'vue';
+
+const emit = defineEmits(['close', 'enter']);
 const props = defineProps({
   form: {
-    default: function() {
-      return {}
-    },
-    type: Object
+    type: Object,
+    default: () => ({}),
   },
-})
+});
+
+// 表单数据初始化
+const formData = ref({ ...props.form });
+
 watchEffect(() => {
   formData.value = { ...props.form };
 });
@@ -55,31 +50,24 @@ const rules = ref({
   name: [{ required: true, message: '请输入环境名称，以中文命名', trigger: 'blur' }],
   key: [{ required: true, message: '请输入环境标识，只能以字母命名', trigger: 'blur' }],
   desc: [{ required: false, message: '请输入备注信息', trigger: 'blur' }],
-})
-
-// 表单数据初始化
-const formData = ref({})
-const GetFormData = () => {
-  formData.value = props.form
-}
-
-GetFormData()
+});
 
 // 关闭
 const closeDialog = () => {
-  FormBlock.value.resetFields()
-  emit('close')
-}
+  FormBlock.value.resetFields();
+  emit('close');
+};
 
-// 校验并提交
-const FormBlock = ref(null)
-const enterDialog = async() => {
-  FormBlock.value.validate(async valid => {
+// 表单验证并提交
+const FormBlock = ref(null);
+
+const enterDialog = () => {
+  FormBlock.value.validate((valid) => {
     if (valid) {
-      emit('enter', formData.value)
+      emit('enter', formData.value);
     }
-  })
-}
+  });
+};
 </script>
 
 <style scoped>

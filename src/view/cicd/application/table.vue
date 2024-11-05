@@ -8,10 +8,17 @@
         row-key="ID"
         @sort-change="sortChange"
         @selection-change="handleSelectionChange"
+        highlight-current-row
+
     >
       <el-table-column type="selection" width="55" />
       <el-table-column align="left" label="ID" prop="ID" width="80" sortable="custom" />
-      <el-table-column align="left" label="应用名" prop="name" sortable="custom" />
+      <!-- 应用名列，添加 el-link 以实现跳转 -->
+      <el-table-column align="left" label="应用名" prop="name" sortable="custom">
+        <template #default="scope">
+          <el-link @click.prevent="goToDetail(scope.row.ID)" style="cursor: pointer;">{{ scope.row.name }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column align="left" label="全名称" prop="full_name" />
       <el-table-column align="left"  label="语言" prop="language" />
       <el-table-column align="left" label="构建目录" prop="build_path" />
@@ -49,6 +56,8 @@
 import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { toSQLLine } from '@/utils/stringFun'
+import { useRouter } from 'vue-router' // 使用 Vue Router 进行页面跳转
+const router = useRouter() // 初始化 router
 
 const emit = defineEmits(['update', 'delete', 'search', 'region', 'test'])
 defineProps({
@@ -90,7 +99,15 @@ const handleUpdateRegion = (value) => {
 const handleTest = (value) => {
   emit('test', value)
 }
-
+// 行点击事件处理
+const handleRowClick = (row) => {
+  // 使用 Vue Router 跳转到详情页，并将行的 ID 作为参数传递
+  router.push({ name: 'applicationDetail', params: { id: row.ID } })
+}
+// 跳转到详情页
+const goToDetail = (id) => {
+  router.push({ name: 'applicationDetail', query: { id: id } })
+}
 // 删除
 const handleDelete = (value) => {
   emit('delete', value)

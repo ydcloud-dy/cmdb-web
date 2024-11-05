@@ -132,6 +132,8 @@ const handleUpdate = async(row) => {
   title.value = '更新'
   if (res.code === 0) {
     const data = res.data
+
+
     console.log(data,"-----")
     // 将查询结果中的数据赋值到表单
     form.value = {
