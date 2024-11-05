@@ -3,7 +3,7 @@ import service from '@/utils/request'
 
 export const createCodeSource = (data) => {
     return service({
-        url: '/cicd/sourceCode',
+        url: '/configCenter/sourceCode',
         method: 'post',
         data,
         loadingOption: {
@@ -14,7 +14,7 @@ export const createCodeSource = (data) => {
 
 export const deleteSourceCode = (id) => {
     return service({
-        url: `/cicd/sourceCode/${id}`,
+        url: `/configCenter/sourceCode/${id}`,
         method: 'delete',
         loadingOption: {
             target: '.right-container'
@@ -24,7 +24,7 @@ export const deleteSourceCode = (id) => {
 
 export const updateSourceCode = (data) => {
     return service({
-        url: '/cicd/sourceCode',
+        url: '/configCenter/sourceCode',
         method: 'put',
         data
     })
@@ -33,7 +33,7 @@ export const updateSourceCode = (data) => {
 
 export const describeSourceCode = (id) => {
     return service({
-        url: `/cicd/sourceCode/${id}`,
+        url: `/configCenter/sourceCode/${id}`,
         method: 'get',
     })
 }
@@ -41,14 +41,14 @@ export const describeSourceCode = (id) => {
 
 export const getSourceCodeList = (params) => {
     return service({
-        url: '/cicd/sourceCode',
+        url: '/configCenter/sourceCode',
         method: 'get',
         params
     })
 }
 export const deleteSourceCodeByIds = (data) => {
     return service({
-        url: '/cicd/sourceCode',
+        url: '/configCenter/sourceCode',
         method: 'delete',
         data,
         loadingOption: {
@@ -58,7 +58,7 @@ export const deleteSourceCodeByIds = (data) => {
 }
 export const TestSourceCode = (data) => {
     return service({
-        url: '/cicd/sourceCode/verify',
+        url: '/configCenter/sourceCode/verify',
         method: 'post',
         data,
         loadingOption: {

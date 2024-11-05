@@ -3,7 +3,7 @@ import service from '@/utils/request'
 
 export const createEnv = (data) => {
     return service({
-        url: '/cicd/environment',
+        url: '/configCenter/environment',
         method: 'post',
         data,
         loadingOption: {
@@ -14,7 +14,7 @@ export const createEnv = (data) => {
 
 export const deleteEnv = (id) => {
     return service({
-        url: `/cicd/environment/${id}`,
+        url: `/configCenter/environment/${id}`,
         method: 'delete',
         loadingOption: {
             target: '.right-container'
@@ -24,7 +24,7 @@ export const deleteEnv = (id) => {
 
 export const updateEnv = (data) => {
     return service({
-        url: '/cicd/environment',
+        url: '/configCenter/environment',
         method: 'put',
         data
     })
@@ -33,7 +33,7 @@ export const updateEnv = (data) => {
 
 export const describeEnv = (id) => {
     return service({
-        url: `/cicd/environment/${id}`,
+        url: `/configCenter/environment/${id}`,
         method: 'get',
     })
 }
@@ -41,14 +41,14 @@ export const describeEnv = (id) => {
 
 export const getEnvList = (params) => {
     return service({
-        url: '/cicd/environment',
+        url: '/configCenter/environment',
         method: 'get',
         params
     })
 }
 export const deleteEnvByIds = (data) => {
     return service({
-        url: '/cicd/environment',
+        url: '/configCenter/environment',
         method: 'delete',
         data,
         loadingOption: {

@@ -3,7 +3,7 @@ import service from '@/utils/request'
 
 export const createService = (data) => {
     return service({
-        url: '/cicd/service',
+        url: '/configCenter/service',
         method: 'post',
         data,
         loadingOption: {
@@ -14,7 +14,7 @@ export const createService = (data) => {
 
 export const deleteService = (id) => {
     return service({
-        url: `/cicd/service/${id}`,
+        url: `/configCenter/service/${id}`,
         method: 'delete',
         loadingOption: {
             target: '.right-container'
@@ -24,7 +24,7 @@ export const deleteService = (id) => {
 
 export const updateService = (data) => {
     return service({
-        url: '/cicd/service',
+        url: '/configCenter/service',
         method: 'put',
         data
     })
@@ -33,7 +33,7 @@ export const updateService = (data) => {
 
 export const describeService = (id) => {
     return service({
-        url: `/cicd/service/${id}`,
+        url: `/configCenter/service/${id}`,
         method: 'get',
     })
 }
@@ -41,14 +41,14 @@ export const describeService = (id) => {
 
 export const getServiceList = (params) => {
     return service({
-        url: '/cicd/service',
+        url: '/configCenter/service',
         method: 'get',
         params
     })
 }
 export const deleteServiceByIds = (data) => {
     return service({
-        url: '/cicd/service',
+        url: '/configCenter/service',
         method: 'delete',
         data,
         loadingOption: {
@@ -58,7 +58,7 @@ export const deleteServiceByIds = (data) => {
 }
 export const TestService = (data) => {
     return service({
-        url: '/cicd/service/verify',
+        url: '/configCenter/service/verify',
         method: 'post',
         data,
         loadingOption: {
