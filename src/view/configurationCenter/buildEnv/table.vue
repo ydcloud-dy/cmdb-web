@@ -1,29 +1,31 @@
 <template>
   <div>
-    <el-table
-        ref="multipleTable"
-        :data="tableData"
-        style="width: 100%"
-        tooltip-effect="dark"
-        row-key="ID"
-        @sort-change="sortChange"
-        @selection-change="handleSelectionChange"
-    >
+    <el-table ref="multipleTable" :data="tableData" style="width: 100%" tooltip-effect="dark" row-key="ID" @sort-change="sortChange" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
-      <el-table-column align="left" label="ID" prop="ID" width="80" sortable="custom" />
-      <el-table-column align="left" label="应用名" prop="name" sortable="custom" />
-      <el-table-column align="left" label="全名称" prop="full_name" />
-      <el-table-column align="left"  label="语言" prop="language" />
-      <el-table-column align="left" label="构建目录" prop="build_path" />
-
-      <!-- 可点击的仓库地址列 -->
-      <el-table-column align="left" label="仓库地址" prop="path" show-overflow-tooltip>
+      <el-table-column align="left" label="ID" prop="ID" sortable="custom" />
+      <!-- 自定义的名称列 -->
+      <el-table-column align="left" label="名称" prop="name" sortable="custom">
         <template #default="scope">
-          <el-link :href="scope.row.path" target="_blank">{{ scope.row.path }}</el-link>
+          <el-tag type="success">{{ scope.row.name }}</el-tag>
+<!--          <span class="status-label" :class="{ 'status-ready': scope.row.name === 'Ready' }">-->
+<!--            {{ scope.row.name }}-->
+<!--          </span>-->
         </template>
       </el-table-column>
 
+      <!-- 类型列，使用插槽实现样式化标签显示 -->
+      <el-table-column align="left" label="镜像地址" prop="image">
+        <template #default="scope">
+          <el-tooltip class="item" effect="dark" :content="scope.row.image" placement="top">
+            <span>{{ scope.row.image }}</span>
+          </el-tooltip>
+        </template>
+      </el-table-column>
 
+      <el-table-column align="left" label="启动命令" prop="command" />
+      <el-table-column align="left" label="启动参数" prop="args" />
+      <el-table-column align="left" label="描述" prop="desc" />
+      <el-table-column align="left" label="创建者" prop="CreatedName" />
       <el-table-column align="left" label="创建时间" prop="CreatedAt" :formatter="formatDate" />
 
       <el-table-column align="left" label="操作">
@@ -50,7 +52,7 @@ import { ref } from 'vue'
 import dayjs from 'dayjs'
 import { toSQLLine } from '@/utils/stringFun'
 
-const emit = defineEmits(['update', 'delete', 'search', 'region', 'test'])
+const emit = defineEmits(['update', 'delete', 'search', 'region','test'])
 defineProps({
   tableData: {
     default: function() {
