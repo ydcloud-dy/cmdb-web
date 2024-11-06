@@ -1,5 +1,5 @@
 <template>
-  <div style="padding: 20px;">
+  <div style="padding: 20px; height: 100vh; overflow-y: auto;">
     <!-- 面包屑导航 -->
     <el-breadcrumb separator="/">
       <el-breadcrumb-item @click="goToApplications" style="cursor: pointer; color: #409EFF;">我的应用</el-breadcrumb-item>
@@ -7,7 +7,7 @@
     </el-breadcrumb>
 
     <!-- 应用信息展示 -->
-    <h2>{{ appDetails.name }}</h2>
+    <h2 style="color: white;">{{ appDetails.name }}</h2>
     <el-descriptions :column="2" border>
       <el-descriptions-item label="开发语言">{{ appDetails.language }}</el-descriptions-item>
       <el-descriptions-item label="编译环境">{{ appDetails.compile_env }}</el-descriptions-item>
@@ -20,7 +20,9 @@
     <!-- 分支信息展示 -->
     <h3 style="margin-top: 20px;">分支信息</h3>
     <el-button size="small" type="primary" icon="el-icon-refresh" @click="syncBranches">同步远程分支</el-button>
-    <el-table :data="branchData" style="width: 100%; margin-top: 10px;">
+
+    <!-- 设置表格高度 -->
+    <el-table :data="branchData" style="width: 100%; margin-top: 10px;" height="400">
       <el-table-column prop="branch_name" label="分支名称" />
       <el-table-column prop="path" label="路径" width="400">
         <template #default="scope">
@@ -48,11 +50,13 @@
   </div>
 </template>
 
+
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { useRouter, useRoute } from 'vue-router'
-import { describeApplications } from '@/api/cicd/applications'
+import { describeApplications,syncApplicationBranchs,getAppBranchList } from '@/api/cicd/applications'
 import {describeBuildEnv} from "@/api/configurationCenter/buildEnv"; // 确保该路径正确
 // 假设您有一个方法用于获取分支信息
 // import { getBranchList } from '@/api/cicd/branches'
@@ -99,12 +103,12 @@ const fetchAppDetails = async () => {
 }
 
 // 获取分支列表
+// 获取分支列表
 const fetchBranches = async () => {
-  const id = route.params.id
-  const res = await getBranchList(id, page.value, pageSize.value)
+  const res = await getAppBranchList(id,page.value,pageSize.value)
   if (res.code === 0) {
-    branchData.value = res.data.list
-    totalBranches.value = res.data.total
+    branchData.value = res.data.list || []
+    totalBranches.value = res.data.total || branchData.value.length
   } else {
     console.error("获取分支列表失败:", res.msg)
   }
@@ -112,9 +116,22 @@ const fetchBranches = async () => {
 
 // 同步远程分支操作
 const syncBranches = async () => {
-  console.log('同步远程分支')
-  await fetchBranches()
+  const res = await syncApplicationBranchs(id)
+  if (res.code === 0) {
+    console.log("同步分支成功")
+    await fetchBranches() // 同步成功后重新获取分支列表
+  } else {
+    console.error("同步远程分支失败:", res.msg)
+  }
 }
+
+
+// 分支的具体操作
+
+onMounted(() => {
+  fetchAppDetails() // 加载时获取应用详情
+  fetchBranches()    // 加载时获取分支列表
+})
 
 // 分页变化处理
 const handlePageChange = (val) => {

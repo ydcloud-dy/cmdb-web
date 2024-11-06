@@ -11,7 +11,24 @@ export const createApplications = (data) => {
         }
     })
 }
-
+export const syncApplicationBranchs = (id) => {
+    return service({
+        url: `/cicd/applications/${id}/syncBranches`,
+        method: 'post',
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}
+export const getAppBranchList = (id,page,pageSize) => {
+    return service({
+        url: `/cicd/applications/${id}/branches`,
+        method: 'get',
+        params:{
+            page,pageSize
+        }
+    })
+}
 export const deleteApplications = (id) => {
     return service({
         url: `/cicd/applications/${id}`,
