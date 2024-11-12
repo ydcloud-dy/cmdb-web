@@ -1,5 +1,5 @@
 <template>
-  <div style="padding: 20px; height: 100vh; overflow-y: auto;">
+  <el-scrollbar style="height: 100vh; margin: 20px;">
     <!-- 面包屑导航 -->
     <el-breadcrumb separator="/">
       <el-breadcrumb-item @click="goToApplications" style="cursor: pointer; color: #409EFF;">我的应用</el-breadcrumb-item>
@@ -21,8 +21,8 @@
     <h3 style="margin-top: 20px;">分支信息</h3>
     <el-button size="small" type="primary" icon="el-icon-refresh" @click="syncBranches">同步远程分支</el-button>
 
-    <!-- 设置表格高度 -->
-    <el-table :data="branchData" style="width: 100%; margin-top: 10px;" height="400">
+    <!-- 表格显示 -->
+    <el-table v-if="branchData.length > 0" :data="branchData" style="width: 100%; margin-top: 10px;" border>
       <el-table-column prop="branch_name" label="分支名称" />
       <el-table-column prop="path" label="路径" width="400">
         <template #default="scope">
@@ -35,45 +35,47 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-empty v-else description="暂无分支数据" />
 
-    <!-- 分页 -->
-    <el-pagination
-        style="margin-top: 10px;"
-        :current-page="page"
-        :page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        :total="totalBranches"
-        layout="total, sizes, prev, pager, next, jumper"
-        @current-change="handlePageChange"
-        @size-change="handlePageSizeChange"
-    />
-  </div>
+    <!-- 流水线信息展示 -->
+    <h3 style="margin-top: 20px;">流水线</h3>
+    <el-button size="small" type="primary" icon="el-icon-plus" @click="createPipeline">创建流水线</el-button>
+
+    <!-- 流水线表格 -->
+    <el-table v-if="pipelineData.length > 0" :data="pipelineData" style="width: 100%; margin-top: 10px;" border>
+      <el-table-column prop="status" label="运行状态" />
+      <el-table-column prop="user" label="运行人" />
+      <el-table-column prop="branch" label="分支" />
+      <el-table-column prop="lastRunTime" label="最近运行时间" />
+      <el-table-column prop="duration" label="耗时" />
+      <el-table-column label="操作">
+        <template #default="scope">
+          <el-button type="text" size="small" @click="handlePipelineAction(scope.row)">操作</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-empty v-else description="暂无流水线数据" />
+  </el-scrollbar>
 </template>
-
 
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { useRouter, useRoute } from 'vue-router'
-import { describeApplications,syncApplicationBranchs,getAppBranchList } from '@/api/cicd/applications'
-import {describeBuildEnv} from "@/api/configurationCenter/buildEnv"; // 确保该路径正确
-// 假设您有一个方法用于获取分支信息
-// import { getBranchList } from '@/api/cicd/branches'
+import { describeApplications, syncApplicationBranchs, getAppBranchList } from '@/api/cicd/applications'
+import { describeBuildEnv } from "@/api/configurationCenter/buildEnv"
 
 const router = useRouter()
 const route = useRoute()
-const id = route.query.id // 从查询参数中获取应用 ID
+const id = route.query.id
 
 const appDetails = ref({})
 const branchData = ref([])
-
-const page = ref(1)
-const pageSize = ref(10)
-const totalBranches = ref(0)
+const pipelineData = ref([]) // 流水线数据
 
 const goToApplications = () => {
-  router.push({ name: 'applications' }) // 使用路由名称进行导航
+  router.push({ name: 'applications' })
 }
 
 const formatDate = (date) => {
@@ -82,16 +84,15 @@ const formatDate = (date) => {
 
 // 获取应用详情
 const fetchAppDetails = async () => {
-  // const id = route.params.id // 从路由参数中获取应用 ID
-  console.log(id)
   const res = await describeApplications(id)
   if (res.code === 0) {
     const data = await describeBuildEnv(res.data.compile_env_id);
-    console.log(data)
+    console.log(res.data)
     appDetails.value = {
       name: res.data.name,
+      path: res.data.path,
       language: res.data.language,
-      compile_env: data.data.name, // 根据实际数据格式修改
+      compile_env: data.data.name,
       build_path: res.data.build_path,
       dockerfile: res.data.dockerfile,
       creator: res.data.CreatedName,
@@ -103,14 +104,24 @@ const fetchAppDetails = async () => {
 }
 
 // 获取分支列表
-// 获取分支列表
 const fetchBranches = async () => {
-  const res = await getAppBranchList(id,page.value,pageSize.value)
+  const res = await getAppBranchList(id, 1, 10000)
   if (res.code === 0) {
     branchData.value = res.data.list || []
-    totalBranches.value = res.data.total || branchData.value.length
   } else {
     console.error("获取分支列表失败:", res.msg)
+  }
+}
+
+// 获取流水线数据
+const fetchPipelines = async () => {
+  // 这里应该是从接口获取流水线数据
+  // 假设接口返回的格式为：[{ status: '', user: '', branch: '', lastRunTime: '', duration: '' }]
+  const res = await getPipelineList(id)
+  if (res.code === 0) {
+    pipelineData.value = res.data.list || []
+  } else {
+    console.error("获取流水线数据失败:", res.msg)
   }
 }
 
@@ -118,30 +129,25 @@ const fetchBranches = async () => {
 const syncBranches = async () => {
   const res = await syncApplicationBranchs(id)
   if (res.code === 0) {
-    console.log("同步分支成功")
-    await fetchBranches() // 同步成功后重新获取分支列表
+    await fetchBranches()
   } else {
     console.error("同步远程分支失败:", res.msg)
   }
 }
 
+// 创建流水线操作
+const createPipeline = () => {
+  console.log("创建流水线");
+  const url = router.resolve({
+    path: '/layout/cicd/createPipeline', // 路由路径
+    query: { id: id,name:appDetails.value.name,gitUrl: appDetails.value.path  }                    // 查询参数
+  }).href;
+  window.open(url, '_blank');  // 新开标签页，并带上查询参数
+};
 
-// 分支的具体操作
-
-onMounted(() => {
-  fetchAppDetails() // 加载时获取应用详情
-  fetchBranches()    // 加载时获取分支列表
-})
-
-// 分页变化处理
-const handlePageChange = (val) => {
-  page.value = val
-  fetchBranches() // 分页变化时重新获取分支列表
-}
-
-const handlePageSizeChange = (val) => {
-  pageSize.value = val
-  fetchBranches() // 每页大小变化时重新获取分支列表
+// 流水线的操作
+const handlePipelineAction = (pipeline) => {
+  console.log(`操作流水线: ${pipeline.branch}`)
 }
 
 // 分支的具体操作
@@ -150,8 +156,9 @@ const handleBranchAction = (branch) => {
 }
 
 onMounted(() => {
-  fetchAppDetails() // 加载时获取应用详情
-  fetchBranches()    // 加载时获取分支列表
+  fetchAppDetails()
+  fetchBranches()
+  fetchPipelines() // 获取流水线数据
 })
 </script>
 

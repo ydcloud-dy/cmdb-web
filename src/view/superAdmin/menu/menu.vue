@@ -812,4 +812,21 @@ const editMenu = async(id) => {
     margin-right: 8px;
   }
 }
+.dycloud-table-box {
+  height: calc(100vh - 150px); /* 调整这个值，使表格区域更高 */
+  overflow-y: auto;
+}
+
+.warning {
+  color: #dc143c;
+}
+
+.icon-column {
+  display: flex;
+  align-items: center;
+
+  .el-icon {
+    margin-right: 8px;
+  }
+}
 </style>
