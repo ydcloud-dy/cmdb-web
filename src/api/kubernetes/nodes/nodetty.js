@@ -4,6 +4,7 @@ export const getNodetty = (data) => {
     return service({
         url: '/kubernetes/nodetty/get',
         method: 'post',
-        data
+        data,
+        doNotShowLoading: true,
     })
 }

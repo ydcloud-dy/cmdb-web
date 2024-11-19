@@ -184,30 +184,35 @@ const sortChange = ({ prop, order }) => {
 // 更新
 const handleUpdate = async (row) => {
   try {
-    const response = await describeApplications(row.ID) // 调用获取详情的 API
+    const response = await describeApplications(row.ID); // 调用获取详情的 API
     if (response.code === 0) {
-      const data = response.data
+      const data = response.data;
 
       // 填充表单
-      editForm.ID = data.ID
-      editForm.gitRepo = data.gitRepo
-      editForm.branch = data.branch
-      editForm.appName = data.appName
-      editForm.appCode = data.appCode
-      editForm.appDesc = data.appDesc
-      editForm.language = data.language
-      editForm.owner = data.owner.map((owner) => owner.ID) // 映射 owner 到表单
+      editForm.value = {
+        ID: data.ID,
+        gitRepo: data.gitRepo || '',
+        branch: data.branch || '',
+        appName: data.appName || '',
+        appCode: data.appCode || '',
+        appDesc: data.appDesc || '',
+        language: data.language || '',
+        isCore: data.isCore || false,
+        // 映射负责人和开发人员 ID 列表
+        owner: data.owner.map((owner) => owner.ID),
+        developers: data.develop.map((developer) => developer.ID),
+      };
 
-      editDialogVisible.value = true // 显示弹窗
+      // 弹窗显示
+      editDialogVisible.value = true;
     } else {
-      ElMessage.error(response.msg || '获取应用详情失败！')
+      ElMessage.error(response.msg || '获取应用详情失败！');
     }
   } catch (error) {
-    console.error('获取应用详情失败：', error)
-    ElMessage.error('请求失败，请稍后重试！')
+    console.error('获取应用详情失败：', error);
+    ElMessage.error('请求失败，请稍后重试！');
   }
-  // emit('update', value)
-}
+};
 
 // 同步Region
 const handleUpdateRegion = (value) => {
