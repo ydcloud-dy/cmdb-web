@@ -128,29 +128,30 @@ getTableData()
 const dialogFormVisible = ref(false)
 const type = ref('')
 const handleUpdate = async(row) => {
-  const res = await describeApplications(row.ID)
+  console.log("修改表格数据啦啊啊啊")
+  // const res = await describeApplications(row.ID)
   type.value = 'update'
   title.value = '更新'
-  if (res.code === 0) {
-    const data = res.data
+  getTableData()
+  // if (res.code === 0) {
+  //   const data = res.data
 
+    // console.log(data,"-----")
+    // // 将查询结果中的数据赋值到表单
+    // form.value = {
+    //   ID: data.ID,
+    //   name: data.name,
+    //   full_name: data.full_name,
+    //   language: data.language,
+    //   build_path: data.build_path,
+    //   dockerfile: data.dockerfile,
+    //   repo_id: data.repo_id,
+    //   path: data.path,
+    //   compile_env_id: data.compile_env_id
+    // };
 
-    console.log(data,"-----")
-    // 将查询结果中的数据赋值到表单
-    form.value = {
-      ID: data.ID,
-      name: data.name,
-      full_name: data.full_name,
-      language: data.language,
-      build_path: data.build_path,
-      dockerfile: data.dockerfile,
-      repo_id: data.repo_id,
-      path: data.path,
-      compile_env_id: data.compile_env_id
-    };
-
-    dialogFormVisible.value = true
-  }
+    // dialogFormVisible.value = true
+  // }
 }
 
 
@@ -237,7 +238,7 @@ const enterDialog = async (value) => {
   } else if (type.value === 'update') {
 
 
-    res = await updateApplications(value);
+    // res = await updateApplications(value);
   }
 
   // 处理 API 响应
