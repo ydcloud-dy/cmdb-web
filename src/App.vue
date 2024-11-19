@@ -33,10 +33,10 @@ defineOptions({
   min-height: calc(100% - 3rem);
 }
 
-.dycloud-container{
+.gva-container{
   height: calc(100% - 2.5rem);
 }
-.dycloud-container2{
+.gva-container2{
   height: calc(100% - 4.5rem);
 }
 

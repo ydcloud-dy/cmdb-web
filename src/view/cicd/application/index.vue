@@ -13,7 +13,7 @@
     </div>
     <div class="dycloud-table-box">
       <div class="dycloud-btn-list">
-        <el-button size="small" type="primary" icon="plus" @click="openDialog('addApi')">新增</el-button>
+        <el-button size="small" type="primary" icon="plus" @click="goToCreateApplication">新增</el-button>
 <!--        <el-popover v-model="deleteVisible" placement="top" width="160">-->
 <!--          <p>确定要删除吗？</p>-->
 <!--          <div style="text-align: right; margin-top: 8px;">-->
@@ -70,6 +70,7 @@ import TableBlock from './table.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
+import { useRouter } from 'vue-router';
 
 const form = ref({})
 const page = ref(1)
@@ -234,6 +235,8 @@ const enterDialog = async (value) => {
   if (type.value === 'create') {
     res = await createApplications(value);
   } else if (type.value === 'update') {
+
+
     res = await updateApplications(value);
   }
 
@@ -262,6 +265,12 @@ const handleTest = async (value) => {
   // 在这里添加测试逻辑
 }
 
+const router = useRouter()
+
+const goToCreateApplication = () => {
+  router.push({ path: '/layout/cicd/createApplication' });
+
+};
 // 创建
 const openDialog = () => {
   type.value = 'create'

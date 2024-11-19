@@ -1,0 +1,148 @@
+.task-manager {
+  width: 280px;
+  height: 80px;
+  display: flex;
+  margin: 0px;
+  margin-left: 10px;
+}
+
+.task-item{
+  display: flex;
+  justify-content: space-between;
+}
+
+.task-item1{
+  width: 260px;
+  height: 80px;
+  justify-content:center;
+  flex: 9; 
+}
+.task-item2{
+  flex: 1; 
+}
+
+.admin-text {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #c1c7cc;
+}
+
+.line-container {
+  
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.solid-line {
+  flex: 1;
+  height: 2px;
+  background-color: gray;
+  /* 实线颜色 */
+}
+
+.circle {
+  z-index: 9999;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 2px solid red;
+  /* 圆圈边框颜色 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 24px;
+  /* 圆圈内的文字大小 */
+}
+
+.rectangle-container {
+  transform: translateY(-30px);
+  // z-index: -1;
+  margin-top: 0px;
+  width: 230px;
+  align-items: center;
+  margin-left: 15px;
+  justify-content: center;
+}
+
+.rectangle {
+  width: 230px;
+  height: 80px;
+  border-top: transparent;
+  /* 上边框透明 */
+  border-left: 1px dashed gray;
+  /* 左边框虚线 */
+  border-right: 1px dashed gray;
+  /* 右边框虚线 */
+  border-bottom: transparent;
+  /* 下边框虚线 */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: center;
+  /* 水平居中 */
+  position: relative;
+  /* 相对定位，用于按钮的布局 */
+}
+
+.rectangle-bottom {
+  display: flex;
+  color: 1px dashed gray;
+  justify-content: center;
+  align-items: center;
+  width: 230px;
+  position: absolute;
+  bottom: 0;
+  /* 靠底对齐 */
+  transform: translateY(20px);
+}
+
+.dashed-segment {
+  flex: 1;
+  border-top: 1px dashed gray;
+  /* 虚线 */
+  height: 0;
+  /* 不显示高度 */
+}
+
+.button-container {
+  z-index: 1;
+  /* 确保按钮在上层 */
+  padding: 0 10px;
+  /* 按钮的左右间距 */
+}
+
+button {
+  padding: 5px 10px;
+  /* 调整按钮大小 */
+  font-size: 14px;
+  /* 按钮文字大小 */
+  cursor: pointer;
+  border: 1px dashed gray;
+  /* 按钮边框样式 */
+  background-color: transparent;
+  border-radius: 20px;
+  /* 按钮圆角 */
+}
+
+.flow-item-add {
+  height: 60px;
+  font-size: 24px;
+  color: #409EFF;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.text2{
+  margin-top: 10px;
+  margin-left: 15px;
+  font-size: 18px;
+  color: #c1c7cc;
+  background: none;
+  border: none;
+  cursor: pointer;
+}

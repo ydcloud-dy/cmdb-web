@@ -1,127 +1,227 @@
 <template>
-  <el-container>
-    <!-- 页面头部 -->
-    <el-header>
-      <h2>创建流水线</h2>
-    </el-header>
+  <el-scrollbar class="page-scrollbar">
+    <el-container>
+      <!-- 页面头部 -->
+      <el-header>
+        <h2>创建流水线</h2>
+      </el-header>
 
-    <!-- 页面主体 -->
-    <el-main>
-      <!-- 基本信息表单 -->
-      <el-card class="card-section" shadow="never">
-        <h3>基本信息</h3>
-        <el-form :model="pipelineInfo" label-width="80px">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <el-form-item label="名称" required>
-                <el-input v-model="pipelineInfo.name" placeholder="请输入流水线名称"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="关联环境" required>
-                <el-select v-model="pipelineInfo.environment" placeholder="请选择关联环境">
-                  <el-option label="开发环境" value="dev"></el-option>
-                  <el-option label="测试环境" value="test"></el-option>
-                  <el-option label="生产环境" value="prod"></el-option>
-                </el-select>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
-      </el-card>
+      <!-- 页面主体 -->
+      <el-main>
+        <!-- 基本信息表单 -->
+        <el-card class="card-section" shadow="never">
+          <h3>基本信息</h3>
+          <el-form :model="pipelineInfo" label-width="80px">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="名称" required>
+                  <el-input v-model="pipelineInfo.name" placeholder="请输入流水线名称"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="关联环境" required>
+                  <el-select v-model="pipelineInfo.environment" placeholder="请选择关联环境">
+                    <el-option label="开发环境" value="dev"></el-option>
+                    <el-option label="测试环境" value="test"></el-option>
+                    <el-option label="生产环境" value="prod"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </el-card>
 
-      <!-- 阶段任务部分 -->
-      <el-card class="card-section" shadow="never">
-        <h3>阶段任务</h3>
-        <div class="stage-task">
-          <!-- 第一个节点：关联代码库 -->
-          <el-card class="task-card" shadow="always">
-            <div class="task-content">
-              <el-button type="primary" plain @click="linkRepository">关联代码库</el-button>
-              <p v-if="repositoryInfo.url" class="repo-url">{{ repositoryInfo.url }}</p>
-              <div v-if="repositoryInfo.branch && repositoryInfo.url" class="branch-info">
-                <i class="el-icon-branch"></i>
-                <el-tag type="success">{{ repositoryInfo.branch }}</el-tag>
+        <!-- 阶段任务部分 -->
+        <el-card class="card-section" shadow="never">
+          <h3>阶段任务</h3>
+          <div class="stage-task">
+            <!-- 第一个节点：关联代码库 -->
+            <div class="stage-task-left">
+              <div class="task-source">
+                <el-card class="task-card" shadow="always">
+                  <div class="task-content">
+                    <el-button type="primary" plain @click="linkRepository">关联代码库</el-button>
+                    <p v-if="repositoryInfo.url" class="repo-url">{{ repositoryInfo.url }}</p>
+                    <div v-if="repositoryInfo.branch && repositoryInfo.url" class="branch-info">
+                      <i class="el-icon-branch"></i>
+                      <el-tag type="success">{{ repositoryInfo.branch }}</el-tag>
+                    </div>
+                  </div>
+                </el-card>
+
+                <!-- 添加阶段按钮 -->
+                <div class="line-and-button">
+                  <span class="line"></span>
+                  <button class="add-task-icon" @click="openAddTaskDialog">+</button>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="stage-task-right">
+              <div class="flow-list">
+
+                <div v-for="(taskGroup, groupIndex) in taskGrid" :key="groupIndex" class="task-group">
+                  <div v-for="(task, taskIndex) in taskGroup" :key="taskIndex" class="flow-item">
+                    <flowFrame :x='groupIndex' :y='taskIndex' :transform-index="taskGroup"
+                    @editTask="editTask(groupIndex,taskIndex)"
+                      @createTask="createTask(taskGroup, task, groupIndex, taskIndex)"
+                      @handleCircleClick="handleCircleClick(groupIndex,taskIndex)" @openAddTaskDialogFlow="openAddTaskDialogFlow"
+                      :is-show="true" />
+                  </div>
+
+                </div>
+
+
               </div>
             </div>
+          </div>
+        </el-card>
+
+        <!-- 页面底部按钮 -->
+        <div class="footer-buttons">
+          <el-button type="primary" @click="savePipeline">保存</el-button>
+          <el-button @click="cancel">取消</el-button>
+        </div>
+      </el-main>
+
+      <!-- 关联代码库弹窗 -->
+      <el-drawer v-model="repositoryDialogVisible" :show-close="false">
+        <template #header="{ close, titleId, titleClass }">
+          <h4 :id="titleId" :class="titleClass">关联代码库</h4>
+          <el-button type="danger" @click="close">
+            <el-icon class="el-icon--left">
+              <CircleCloseFilled />
+            </el-icon>
+            Close
+          </el-button>
+        </template>
+        <el-form :model="repositoryInfo" label-width="130px">
+          <el-form-item label="代码库地址" required>
+            <el-input v-model="repositoryInfo.url" :disabled="true"></el-input>
+          </el-form-item>
+          <el-form-item label="默认分支" required>
+            <el-select
+                v-model="repositoryInfo.branch"
+                placeholder="请选择分支"
+                style="width: 100%;"
+                clearable
+            >
+              <el-option
+                  v-for="branch in branchData"
+                  :key="branch.ID"
+              :label="branch.branch_name"
+              :value="branch.branch_name"
+              ></el-option>
+            </el-select>
+          </el-form-item>
+
+<!--          <el-form-item label="选择凭证类型" required>-->
+<!--            <el-radio-group v-model="repositoryInfo.voucherType">-->
+<!--              <el-radio :value="1">密码方式</el-radio>-->
+<!--              <el-radio :value="2">密钥方式</el-radio>-->
+<!--            </el-radio-group>-->
+<!--          </el-form-item>-->
+<!--          <el-form-item label="服务连接" required>-->
+<!--            <el-select v-model="repositoryInfo.branch" placeholder="请选择连接">-->
+<!--              <el-option label="gitlab" value="gitlab"></el-option>-->
+<!--              <el-option label="gitte" value="gitte"></el-option>-->
+<!--            </el-select>-->
+<!--          </el-form-item>-->
+<!--          <el-form-item label="开启代码源触发" required>-->
+<!--            <el-switch v-model="repositoryInfo.codeSourceStatus" />-->
+<!--          </el-form-item>-->
+        </el-form>
+        <template #footer>
+          <el-button @click="repositoryDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmRepository">确认</el-button>
+        </template>
+      </el-drawer>
+
+      <!-- 添加阶段弹窗 -->
+      <el-dialog v-model="addTaskDialogVisible" title="添加阶段">
+        <el-form :model="newTask" label-width="80px">
+          <el-form-item label="阶段名称" required>
+            <el-input v-model="newTask.name" placeholder="请输入阶段名称"></el-input>
+          </el-form-item>
+          <h4>阶段参数：</h4>
+          <div v-for="(param, index) in newTask.params" :key="index" class="param-row">
+            <el-form-item label="参数" required>
+              <el-input v-model="param.name" placeholder="参数名称"></el-input>
+            </el-form-item>
+            <el-form-item label="默认值">
+              <el-input v-model="param.defaultValue" placeholder="请输入默认值"></el-input>
+            </el-form-item>
+            <el-button type="text" @click="removeParam(index)">删除</el-button>
+          </div>
+          <el-button plain @click="addParam">+ 添加自定义参数</el-button>
+        </el-form>
+        <template #footer>
+          <el-button @click="addTaskDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmAddTask">确认</el-button>
+        </template>
+      </el-dialog>
+
+
+      <!-- 配置并行任务 -->
+      <el-dialog v-model="addParallelTaskDialogVisible" :title="parallelTaskTitle">
+        <el-form :model="newTask" label-width="80px">
+          <el-form-item label="任务名称" required>
+            <el-input v-model="newTask.name" placeholder="请输入任务名称"></el-input>
+          </el-form-item>
+          <el-form-item label="任务插件" required>
+            <el-select v-model="repositoryInfo.branch" placeholder="请选择任务插件">
+              <el-option label="gitlab" value="1"></el-option>
+              <el-option label="gitte" value="2"></el-option>
+            </el-select>
+          </el-form-item>
+
+          <el-card class="card-section" shadow="never">
+
+            <el-form-item label="目标资源" required>
+              <el-select v-model="repositoryInfo.branch" placeholder="请选择目标资源">
+                <el-option label="资源1" value="1"></el-option>
+                <el-option label="资源2" value="2"></el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="脚本类型" required>
+              <el-radio-group v-model="repositoryInfo.voucherType">
+                <el-radio :value="1">sh</el-radio>
+                <el-radio :value="2">bash</el-radio>
+                <el-radio :value="3">python</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="执行脚本" required>
+              <el-input v-model="textarea" style="width: 240px" :rows="10" type="textarea" placeholder="Please input" />
+            </el-form-item>
           </el-card>
+        </el-form>
+        <template #footer>
+          <el-button @click="addParallelTaskDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmAddParallelTask">确认</el-button>
+        </template>
+      </el-dialog>
 
-          <!-- 显示添加的任务阶段，水平排列 -->
-          <div v-for="(task, index) in tasks" :key="index" class="task-item">
-            <div class="line"></div> <!-- 连接线 -->
-            <div class="task-box">
-              <span>#{{ index + 1 }} {{ task.name }}</span>
-              <el-button type="text" icon="el-icon-error" class="error-icon" @click="removeTask(index)"></el-button>
-              <el-button type="text" class="add-parallel-task">+ 新建并行任务</el-button>
-            </div>
-          </div>
+    </el-container>
 
-          <!-- 添加阶段按钮 -->
-          <div class="line-and-button">
-            <span class="line"></span>
-            <button class="add-task-icon" @click="openAddTaskDialog">+</button>
-          </div>
-        </div>
-      </el-card>
-
-      <!-- 页面底部按钮 -->
-      <div class="footer-buttons">
-        <el-button type="primary" @click="savePipeline">保存</el-button>
-        <el-button @click="cancel">取消</el-button>
-      </div>
-    </el-main>
-
-    <!-- 关联代码库弹窗 -->
-    <el-dialog :model-value="repositoryDialogVisible" title="关联代码库">
-      <el-form :model="repositoryInfo" label-width="80px">
-        <el-form-item label="代码库地址" required>
-          <el-input v-model="repositoryInfo.url" :disabled="true"></el-input>
-        </el-form-item>
-        <el-form-item label="分支" required>
-          <el-select v-model="repositoryInfo.branch" placeholder="请选择分支">
-            <el-option label="main" value="main"></el-option>
-            <el-option label="dev" value="dev"></el-option>
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="repositoryDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmRepository">确认</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 添加阶段弹窗 -->
-    <el-dialog v-model="addTaskDialogVisible" title="添加阶段">
-      <el-form :model="newTask" label-width="80px">
-        <el-form-item label="阶段名称" required>
-          <el-input v-model="newTask.name" placeholder="请输入阶段名称"></el-input>
-        </el-form-item>
-        <h4>阶段参数：</h4>
-        <div v-for="(param, index) in newTask.params" :key="index" class="param-row">
-          <el-form-item label="参数" required>
-            <el-input v-model="param.name" placeholder="参数名称"></el-input>
-          </el-form-item>
-          <el-form-item label="默认值">
-            <el-input v-model="param.defaultValue" placeholder="请输入默认值"></el-input>
-          </el-form-item>
-          <el-button type="text" @click="removeParam(index)">删除</el-button>
-        </div>
-        <el-button type="primary" plain @click="addParam">+ 添加自定义参数</el-button>
-      </el-form>
-      <template #footer>
-        <el-button @click="addTaskDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAddTask">确认</el-button>
-      </template>
-    </el-dialog>
-  </el-container>
+  </el-scrollbar>
 </template>
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElScrollbar } from 'element-plus'
 import { useRoute } from 'vue-router';
+import flowFrame from './flow-frame.vue'
+import {getAppBranchList} from "@/api/cicd/applications";
 
+const taskGrid = ref([[]]);
 const route = useRoute();
+const addParallelTaskDialogVisible = ref(false)
+const parallelTaskTitle = ref('添加任务')
+const index_X = ref(-1)
+const index_Y = ref(-1)
 
 // 从查询参数中获取 id、name 和 gitUrl
 const id = route.query.id;
@@ -136,7 +236,10 @@ const pipelineInfo = reactive({
 
 const repositoryInfo = reactive({
   url: '',
-  branch: ''
+  defaultBranch: 'main',
+  voucherType: 1,
+  branch: '',
+  codeSourceStatus: 0
 })
 
 const tasks = ref([]) // 存储任务列表
@@ -153,6 +256,31 @@ onMounted(() => {
 const linkRepository = () => {
   repositoryDialogVisible.value = true
 }
+const branchData = ref([]);
+const fetchBranches = async () => {
+  const res = await getAppBranchList(id, 1, 10000)
+  if (res.code === 0) {
+    branchData.value = res.data.list || []
+  } else {
+    console.error("获取分支列表失败:", res.msg)
+  }
+}
+onMounted(() => {
+  fetchBranches();
+});
+const handleCircleClick = (x,y) => {
+  addParallelTaskDialogVisible.value = true
+}
+
+const editTask = (x,y) => {
+  addTaskDialogVisible.value = true
+}
+
+const createTask = (taskGroup, task, x, y) => {
+  index_X.value = x
+  index_Y.value = ++y
+  addParallelTaskDialogVisible.value = true
+}
 
 // 确认关联代码库
 const confirmRepository = () => {
@@ -164,9 +292,19 @@ const confirmRepository = () => {
   }
 }
 
+
+
 // 打开添加阶段弹窗
 const openAddTaskDialog = () => {
   addTaskDialogVisible.value = true
+  index_X.value = 0;
+  index_Y.value = 0;
+}
+
+const openAddTaskDialogFlow = (x, y) => {
+  addTaskDialogVisible.value = true
+  index_X.value = ++x;
+  index_Y.value = y;
 }
 
 // 确认添加任务
@@ -176,15 +314,57 @@ const confirmAddTask = () => {
     newTask.name = ''
     newTask.params = [] // 重置参数
     addTaskDialogVisible.value = false
+
+    if (!taskGrid.value[index_Y.value]) {
+      taskGrid.value[index_Y.value] = []; // 如果行不存在，则创建新的空行
+    }
+    if (!taskGrid.value[index_X.value]) {
+      taskGrid.value[index_X.value] = []; // 如果行不存在，则创建新的空行
+    }
+
+    // 确保列存在
+    if (!taskGrid.value[index_X.value][index_Y.value]) {
+      taskGrid.value[index_X.value][index_Y.value] = { isFlowShow: true, transformIndex: 0, isShowwAdd: true, ishowHeader: true }; // 在指定位置添加一个子组件
+    }
+
     ElMessage.success('新阶段已添加')
   } else {
     ElMessage.error('请填写阶段名称')
   }
 }
 
+
+const confirmAddParallelTask = () => {
+
+
+  addParallelTaskDialogVisible.value = false
+
+  if (!taskGrid.value[index_Y.value]) {
+    taskGrid.value[index_Y.value] = []; // 如果行不存在，则创建新的空行
+  }
+  if (!taskGrid.value[index_X.value]) {
+    taskGrid.value[index_X.value] = []; // 如果行不存在，则创建新的空行
+  }
+
+  // 确保列存在
+  if (!taskGrid.value[index_X.value][index_Y.value]) {
+    taskGrid.value[index_X.value][index_Y.value] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: true, ishowHeader: false }; // 在指定位置添加一个子组件
+    taskGrid.value[index_X.value][index_Y.value - 1] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: false, ishowHeader: (index_Y.value - 1) == 0 ? true : false };
+  }
+
+
+
+  ElMessage.success('并行任务已添加')
+
+}
+
 // 添加自定义参数
 const addParam = () => {
   newTask.params.push({ name: '', defaultValue: '' })
+}
+
+const addFlowFrame = () => {
+  tasks.value.push({ name: '', defaultValue: '' })
 }
 
 // 删除自定义参数
@@ -209,16 +389,56 @@ const cancel = () => {
 </script>
 
 <style scoped>
+.page-scrollbar {
+  height: 100vh;
+}
+
 .card-section {
   margin-bottom: 20px;
-  padding: 20px;
+  /* padding: 20px; */
 }
+
 .stage-task {
   display: flex;
-  align-items: center;
+  /* align-items: center; */
   padding: 20px 0;
   gap: 10px;
 }
+
+.stage-task-left {
+  flex: 3;
+  /* 左侧占 3/10 的宽度 */
+  /* background-color: lightblue; */
+  /* 背景颜色 */
+  display: flex;
+  /* 使用 flexbox 对齐内容 */
+  flex-direction: column;
+  /* 纵向排列内容 */
+  justify-content: flex-start;
+  /* 纵向顶部对齐 */
+  align-items: flex-start;
+  /* 横向左侧对齐 */
+}
+
+
+.stage-task-right {
+  flex: 7;
+  display: flex;
+  /* 使用 flexbox 对齐内容 */
+  flex-direction: column;
+  transform: translateX(-20px);
+  /* 纵向排列内容 */
+  justify-content: flex-start;
+  /* 纵向顶部对齐 */
+  align-items: flex-start;
+  /* 横向左侧对齐 */
+}
+
+.task-source {
+  display: flex;
+  align-items: center;
+}
+
 .task-card {
   display: inline-flex;
   align-items: center;
@@ -227,32 +447,38 @@ const cancel = () => {
   border-radius: 6px;
   background-color: #293742;
 }
+
 .task-content {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
+
 .repo-url {
   margin-top: 10px;
   color: #409EFF;
   font-size: 14px;
 }
+
 .branch-info {
   display: flex;
   align-items: center;
   gap: 5px;
   margin-top: 5px;
 }
+
 .line-and-button {
   display: flex;
   align-items: center;
 }
+
 .line {
   width: 30px;
   height: 2px;
   background-color: #dcdfe6;
   margin-right: 8px;
 }
+
 .add-task-icon {
   font-size: 24px;
   color: #409EFF;
@@ -260,32 +486,35 @@ const cancel = () => {
   border: none;
   cursor: pointer;
 }
-.task-item {
+
+
+
+
+.flow-list {
+  margin-top: 15px;
+  width: 280px;
+  /* height: 80px; */
   display: flex;
-  align-items: center;
+  /* 启用 Flexbox布局 */
+  /* flex-direction: column; */
+  /* 设置为垂直方向 */
 }
-.task-box {
-  display: flex;
-  align-items: center;
-  background-color: #f0f2f5;
-  border: 1px solid #dcdfe6;
-  padding: 5px 10px;
-  border-radius: 5px;
+
+.flow-item {
+  display: inline-flex;
+  justify-content: space-between;
+
 }
-.error-icon {
-  color: #f56c6c;
-}
-.add-parallel-task {
-  margin-left: 10px;
-  color: #409EFF;
-  cursor: pointer;
-}
+
+
+
 .footer-buttons {
   display: flex;
   justify-content: flex-start;
   gap: 10px;
   padding: 20px 0;
 }
+
 .param-row {
   display: flex;
   align-items: center;
