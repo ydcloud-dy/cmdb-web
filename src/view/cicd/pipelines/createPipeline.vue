@@ -65,10 +65,10 @@
                 <div v-for="(taskGroup, groupIndex) in taskGrid" :key="groupIndex" class="task-group">
                   <div v-for="(task, taskIndex) in taskGroup" :key="taskIndex" class="flow-item">
                     <flowFrame :x='groupIndex' :y='taskIndex' :transform-index="taskGroup"
-                    @editTask="editTask(groupIndex,taskIndex)"
+                      @editTask="editTask(groupIndex, taskIndex)"
                       @createTask="createTask(taskGroup, task, groupIndex, taskIndex)"
-                      @handleCircleClick="handleCircleClick(groupIndex,taskIndex)" @openAddTaskDialogFlow="openAddTaskDialogFlow"
-                      :is-show="true" />
+                      @handleCircleClick="handleCircleClick(groupIndex, taskIndex)"
+                      @openAddTaskDialogFlow="openAddTaskDialogFlow" :is-show="true" />
                   </div>
 
                 </div>
@@ -102,36 +102,24 @@
             <el-input v-model="repositoryInfo.url" :disabled="true"></el-input>
           </el-form-item>
           <el-form-item label="默认分支" required>
-            <el-select
-                v-model="repositoryInfo.branch"
-                placeholder="请选择分支"
-                style="width: 100%;"
-                clearable
-            >
-              <el-option
-                  v-for="branch in branchData"
-                  :key="branch.ID"
-              :label="branch.branch_name"
-              :value="branch.branch_name"
-              ></el-option>
-            </el-select>
+            <el-input v-model="repositoryInfo.defaultBranch" :disabled="true"></el-input>
           </el-form-item>
 
-<!--          <el-form-item label="选择凭证类型" required>-->
-<!--            <el-radio-group v-model="repositoryInfo.voucherType">-->
-<!--              <el-radio :value="1">密码方式</el-radio>-->
-<!--              <el-radio :value="2">密钥方式</el-radio>-->
-<!--            </el-radio-group>-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="服务连接" required>-->
-<!--            <el-select v-model="repositoryInfo.branch" placeholder="请选择连接">-->
-<!--              <el-option label="gitlab" value="gitlab"></el-option>-->
-<!--              <el-option label="gitte" value="gitte"></el-option>-->
-<!--            </el-select>-->
-<!--          </el-form-item>-->
-<!--          <el-form-item label="开启代码源触发" required>-->
-<!--            <el-switch v-model="repositoryInfo.codeSourceStatus" />-->
-<!--          </el-form-item>-->
+          <el-form-item label="选择凭证类型" required>
+            <el-radio-group v-model="repositoryInfo.voucherType">
+              <el-radio :value="1">密码方式</el-radio>
+              <el-radio :value="2">密钥方式</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="服务连接" required>
+            <el-select v-model="repositoryInfo.gitType" placeholder="请选择连接">
+              <el-option label="gitlab" value="gitlab"></el-option>
+              <el-option label="gitte" value="gitte"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="开启代码源触发" required>
+            <el-switch v-model="repositoryInfo.codeSourceStatus" />
+          </el-form-item>
         </el-form>
         <template #footer>
           <el-button @click="repositoryDialogVisible = false">取消</el-button>
@@ -160,6 +148,8 @@
         <template #footer>
           <el-button @click="addTaskDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="confirmAddTask">确认</el-button>
+          <el-button type="danger" @click="deleteCurrentTask" v-if="isEditTask">删除</el-button>
+
         </template>
       </el-dialog>
 
@@ -199,8 +189,10 @@
           </el-card>
         </el-form>
         <template #footer>
-          <el-button @click="addParallelTaskDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="confirmAddParallelTask">确认</el-button>
+          <el-button type="danger" @click="deleteParallelTask" :disabled="!isShowDel">删除</el-button>
+          <el-button @click="addParallelTaskDialogVisible = false">取消</el-button>
+
         </template>
       </el-dialog>
 
@@ -210,11 +202,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import { ElMessage, ElScrollbar } from 'element-plus'
 import { useRoute } from 'vue-router';
 import flowFrame from './flow-frame.vue'
-import {getAppBranchList} from "@/api/cicd/applications";
+import {describeApplications} from "@/api/cicd/applications";
 
 const taskGrid = ref([[]]);
 const route = useRoute();
@@ -222,9 +214,10 @@ const addParallelTaskDialogVisible = ref(false)
 const parallelTaskTitle = ref('添加任务')
 const index_X = ref(-1)
 const index_Y = ref(-1)
+const isEditTask = ref(false); // 是否在编辑已有阶段
 
 // 从查询参数中获取 id、name 和 gitUrl
-const id = route.query.id;
+const appId = route.query.appId;
 const name = route.query.name;
 const gitUrl = route.query.gitUrl;
 
@@ -236,7 +229,7 @@ const pipelineInfo = reactive({
 
 const repositoryInfo = reactive({
   url: '',
-  defaultBranch: 'main',
+  defaultBranch: '',
   voucherType: 1,
   branch: '',
   codeSourceStatus: 0
@@ -248,54 +241,160 @@ const addTaskDialogVisible = ref(false) // 控制添加阶段弹窗的显示
 const repositoryDialogVisible = ref(false) // 控制关联代码库弹窗的显示
 
 // 在页面加载时设置 repositoryInfo.url 为 gitUrl
-onMounted(() => {
-  repositoryInfo.url = gitUrl || ''; // 如果 gitUrl 存在则设置为默认值
+onMounted(async () => {
+  // repositoryInfo.url = gitUrl || ''; // 如果 gitUrl 存在则设置为默认值
+  await loadAppDetails(); // 确保调用接口
+
 })
+const currentTaskIndex = ref(-1);
 
 // 打开关联代码库弹窗
 const linkRepository = () => {
   repositoryDialogVisible.value = true
 }
-const branchData = ref([]);
-const fetchBranches = async () => {
-  const res = await getAppBranchList(id, 1, 10000)
-  if (res.code === 0) {
-    branchData.value = res.data.list || []
+const deleteCurrentTask = () => {
+  if (currentTaskIndex.value >= 0) {
+    tasks.value.splice(currentTaskIndex.value, 1);
+    currentTaskIndex.value = -1;
+    addTaskDialogVisible.value = false;
+    ElMessage.success("阶段已删除");
   } else {
-    console.error("获取分支列表失败:", res.msg)
+    ElMessage.error("无法删除阶段，请刷新后重试！");
   }
-}
-onMounted(() => {
-  fetchBranches();
-});
-const handleCircleClick = (x,y) => {
+};
+const handleCircleClick = (x, y) => {
+  isShowDel.value = true
   addParallelTaskDialogVisible.value = true
 }
 
-const editTask = (x,y) => {
+const editTask = (x, y) => {
+  isShowDel.value = true
   addTaskDialogVisible.value = true
+
 }
 
+const isShowDel = ref(false)
 const createTask = (taskGroup, task, x, y) => {
+  isShowDel.value = false
   index_X.value = x
   index_Y.value = ++y
   addParallelTaskDialogVisible.value = true
+
 }
 
 // 确认关联代码库
 const confirmRepository = () => {
-  if (repositoryInfo.url && repositoryInfo.branch) {
-    repositoryDialogVisible.value = false
-    ElMessage.success('关联代码库成功')
+  if (repositoryInfo.url && repositoryInfo.defaultBranch) {
+    // 将弹窗填写的 Git 地址和分支更新到主界面显示
+    repositoryInfo.branch = repositoryInfo.defaultBranch; // 更新主界面显示的分支
+    repositoryDialogVisible.value = false; // 关闭弹窗
+    ElMessage.success('关联代码库成功');
   } else {
-    ElMessage.error('请填写完整信息')
+    ElMessage.error('请填写完整信息');
   }
-}
+};
+
+
+const numberOfRows = computed(() => {
+  return taskGrid.value.length;
+});
+
+// 计算列数，假设以第一行的长度为列数基准
+const numberOfColumns = computed(() => {
+  if (taskGrid.value.length === 0) {
+    return 0; // 如果没有行，列数为 0
+  }
+  return taskGrid.value[0].length; // 获取第一行的列数
+});
+
+const deleteParallelTask = () => {
+
+
+  console.log("deleteParallelTask", index_X.value, index_Y.value)
+  // 从 taskGrid 中删除指定的任务
+  // if (taskGrid.value[index_X.value] && taskGrid.value[index_X.value][index_Y.value]) {
+  //   taskGrid.value[index_X.value].splice(index_Y.value, 1);
+
+  //   // 如果当前组为空，可以选择删除整个组
+  //   if (taskGrid.value[index_X.value].length === 0) {
+  //     taskGrid.value.splice(index_X.value, 1);
+  //   }
+
+  //   if (index_Y.value > 0) {
+  //     taskGrid.value[index_X.value][index_Y.value - 1] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: true, ishowHeader: (index_Y.value - 1) == 0 ? true : false };
+  //   }
+  //   ElMessage.success('任务已删除');
+  //   addParallelTaskDialogVisible.value = false
+  //   // if (taskGrid.value[index_X.value].length === 0) {
+  //   //   // 如果当前组没有任务，则从 taskGrid 中删除该组
+  //   //   taskGrid.value.splice(index_X.value, 1);
+  //   //   index_X.value = -1; // 可以重置为无效值或其他逻辑
+  //   //   index_Y.value = -1; // 可以重置为无效值或其他逻辑
+  //   // } else {
+  //   //   // 如果当前组仍有任务，更新 index_Y
+  //   //   index_Y.value = Math.min(indexY.value, taskGrid.value[index_X.value].length - 1); // 确保 index_Y 在有效范围内
+  //   // }
+  //   if (taskGrid.value[index_X.value].length === 0) {
+  //     taskGrid.value.splice(index_X.value, 1);
+  //     index_X.value = 0; // 重置为无效值
+  //     index_Y.value = 0;
+  //   } else {
+  //     // 更新 index_Y
+  //     index_Y.value = Math.min(index_Y.value, taskGrid.value[index_X.value].length - 1);
+  //   }
+
+
+
+  // } else {
+  //   ElMessage.error('任务未找到');
+  // }
+
+  if (index_Y.value > 0) {
+    taskGrid.value[index_X.value][index_Y.value - 1] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: true, ishowHeader: (index_Y.value - 1) == 0 ? true : false };
+  }else if (index_Y.value == 0) {
+    taskGrid.value[index_X.value][index_Y.value ] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: true, ishowHeader: true };
+  }
+  if (taskGrid.value[index_X.value] && taskGrid.value[index_X.value][index_Y.value]) {
+    // 删除指定的任务
+    taskGrid.value[index_X.value].splice(index_Y.value, 1);
+
+    // 如果当前组为空，删除整个组
+    if (taskGrid.value[index_X.value].length === 0) {
+      // 删除该组
+      taskGrid.value.splice(index_X.value, 1);
+
+
+      // 更新 index_X，确保指向有效的索引
+      if (taskGrid.value.length === 0) {
+
+        index_X.value = -1; // 如果没有任务组，重置为无效值
+        index_Y.value = -1; // 同理
+      } else {
+
+        // 如果删除之后还有任务组，更新 index_X
+        index_X.value = Math.max(0, index_X.value - 1); // 指向删除后组的上一个索引
+        index_Y.value = Math.min(index_Y.value, taskGrid.value[index_X.value].length - 1); // 确保 index_Y 指向有效的列
+      }
+    } else {
+
+      // 更新 index_Y
+      index_Y.value = Math.min(index_Y.value, taskGrid.value[index_X.value].length - 1);
+    }
+
+
+
+    ElMessage.success('任务已删除');
+    addParallelTaskDialogVisible.value = false;
+  } else {
+    ElMessage.error('任务未找到');
+  }
+};
 
 
 
 // 打开添加阶段弹窗
-const openAddTaskDialog = () => {
+const openAddTaskDialog = (index = -1) => {
+  isEditTask.value = true;
   addTaskDialogVisible.value = true
   index_X.value = 0;
   index_Y.value = 0;
@@ -306,6 +405,22 @@ const openAddTaskDialogFlow = (x, y) => {
   index_X.value = ++x;
   index_Y.value = y;
 }
+const loadAppDetails = async () => {
+  console.log(appId)
+  console.log("================================")
+  try {
+    const res = await describeApplications(appId); // 调用接口
+    if (res.code === 0 && res.data) {
+      repositoryInfo.url = res.data.gitRepo || ''; // 填充代码库地址
+      repositoryInfo.defaultBranch = res.data.branch || 'main'; // 填充默认分支
+    } else {
+      ElMessage.error(res.msg || '获取应用详情失败');
+    }
+  } catch (error) {
+    console.error('加载应用详情失败:', error);
+    ElMessage.error('加载应用详情失败，请稍后重试');
+  }
+};
 
 // 确认添加任务
 const confirmAddTask = () => {
@@ -357,6 +472,7 @@ const confirmAddParallelTask = () => {
   ElMessage.success('并行任务已添加')
 
 }
+
 
 // 添加自定义参数
 const addParam = () => {
@@ -495,15 +611,13 @@ const cancel = () => {
   width: 280px;
   /* height: 80px; */
   display: flex;
-  /* 启用 Flexbox布局 */
-  /* flex-direction: column; */
-  /* 设置为垂直方向 */
+
 }
 
 .flow-item {
   display: inline-flex;
   justify-content: space-between;
-
+  flex: 1
 }
 
 

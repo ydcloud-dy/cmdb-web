@@ -290,11 +290,7 @@ const sortChange = ({ prop, order }) => {
   }
   emit('search', searchInfo.value)
 }
-const envForm = ref({
-  env: '',
-  cluster: '',
-  namespace: '',
-});
+
 
 const formRef = ref(null);
 
@@ -379,14 +375,22 @@ const submitForm = async () => {
 
     // 构造提交的 JSON 数据
     const formattedData = {
-      envs: environments.value.map((env, index) => ({
-        ID: env.ID || null, // 如果有 ID 就带上，没有就为空
-        clusterName: env.cluster, // 从 environments 提取 clusterName
-        clusterId: clusterOptions.value.find(c => c.label === env.cluster)?.value || null, // 根据 clusterName 找到对应的 ID
-        envCode: env.env, // 环境代码
-        envName: environmentOptions.value.find(e => e.value === env.env)?.label || '', // 根据 envCode 找到对应的环境名称
-        namespace: env.namespace, // 命名空间
-      })),
+      envs: environments.value.map((env) => {
+        // 查找匹配的集群信息
+        const cluster = clusterOptions.value.find(c => c.value === env.cluster); // 确保 `env.cluster` 是 `clusterId`
+
+        // 查找匹配的环境信息
+        const environment = environmentOptions.value.find(e => e.value === env.env);
+
+        return {
+          ID: env.ID || null, // 如果是新增环境，ID 应为 null
+          clusterName: cluster ? cluster.label : '', // 使用选中的集群名称
+          clusterId: cluster ? cluster.value : null, // 使用选中的集群 ID
+          envCode: env.env, // 环境代码
+          envName: environment ? environment.label : '', // 使用选中的环境名称
+          namespace: env.namespace, // 命名空间
+        };
+      }),
       app: {
         ID: editForm.value.ID,
         gitRepo: editForm.value.gitRepo,
@@ -435,9 +439,8 @@ const submitForm = async () => {
     if (res.code === 0) {
       ElMessage.success('应用更新成功！');
       editDialogVisible.value = false; // 关闭对话框
-      dialogStep.value = 1
-      emit('update', "")
-      // 在此处可以刷新表格数据或执行其他逻辑
+      dialogStep.value = 1;
+      emit('update', '');
     } else {
       ElMessage.error(res.msg || '更新应用失败！');
     }

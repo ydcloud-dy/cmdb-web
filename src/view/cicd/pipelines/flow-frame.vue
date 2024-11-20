@@ -5,13 +5,13 @@
     <div class="task-item" ref="taskItem">
       <div class="task-item1">
         <div class="header" style="cursor: pointer" v-if="transformIndex[props.y]?.ishowHeader">
-          <el-tag effect="dark"  round @click="editTask">
+          <el-tag effect="dark" round @click="editTask">
             {{ taskName }}
           </el-tag>
         </div>
 
 
-        <div class="line-container">
+        <div class="line-container" ref="lineContainer">
           <div class="solid-line"></div>
           <div class="circle" :style="{ backgroundColor: hover ? 'lightcoral' : 'white' }" @mouseenter="hover = true"
             @mouseleave="hover = false" @click="handleCircleClick">
@@ -22,10 +22,10 @@
 
 
         <div class="rectangle-container">
-          <div class="rectangle">
-            <div class="dashed-line left-dashed"></div>
+          <div class="rectangle" ref="rectangle">
+            <div class="dashed-line left-dashed" ref="leftRectangle"></div>
             <span class="text2">admin</span>
-            <div class="dashed-line right-dashed"></div>
+            <div class="dashed-line right-dashed" ref="rightRectangle"></div>
           </div>
 
           <div v-if="transformIndex[y]?.isShowwAdd" class="rectangle-bottom">
@@ -37,7 +37,8 @@
           </div>
         </div>
       </div>
-      <div class="task-item2" v-if="transformIndex[props.y]?.ishowHeader"><button class="flow-item-add" @click="openAddTaskDialogFlow">+</button></div>
+      <div class="task-item2" v-if="transformIndex[props.y]?.ishowHeader"><button class="flow-item-add"
+          @click="openAddTaskDialogFlow">+</button></div>
     </div>
 
   </div>
@@ -48,10 +49,14 @@ import { reactive, ref, onMounted, watch } from 'vue'
 import { ElMessage, ElScrollbar, ElTag } from 'element-plus'
 
 const taskItem = ref(null);
+const leftRectangle = ref(null)
+const rightRectangle = ref(null)
+const rectangle = ref(null)
+const lineContainer = ref(null)
 const data = ref(0)
-const emits = defineEmits(['handleCircleClick', 'createTask', 'openAddTaskDialogFlow','editTask'])
+const emits = defineEmits(['handleCircleClick', 'createTask', 'openAddTaskDialogFlow', 'editTask'])
 const props = defineProps({
-  
+
   isShow: {
     type: Boolean,
     required: false,
@@ -103,17 +108,18 @@ const editTask = () => {
 watch(
   () => props.transformIndex[props.y]?.transformIndex,
   (newVal, oldVal) => {
-    if (taskItem.value) {
-      // if (taskItem.value.style.transform == 0) {
-      //   taskItem.value.style.position = 'absolute'; // 必须设置为绝对定位
-      //   taskItem.value.style.transform = 'translateY(0px)'; // 向上移动 50 像素
-      //   taskItem.value.style.zIndex = '-1'; // 设置 z-index 到较高值以覆盖其他元素
-      // } else {
-      //   taskItem.value.style.position = 'absolute'; // 必须设置为绝对定位
-      //   taskItem.value.style.transform = 'translateY(0px)'; // 向上移动 50 像素
-      //   taskItem.value.style.zIndex = '-1'; // 设置 z-index 到较高值以覆盖其他元素
-      // }
+    if (rectangle.value) {
+      if (props.transformIndex[props.y]?.transformIndex == 0) {
+        rectangle.value.style.borderLeft = "1px dashed gray";
+        rectangle.value.style.borderRight = "1px dashed gray";
 
+      } else {
+        rectangle.value.style.borderLeft = "1px solid gray";
+        rectangle.value.style.borderRight = "1px solid gray";
+        // lineContainer.value.style.marginLeft = "15px";
+        // lineContainer.value.style.width = "230px";
+
+      }
     }
   }
 )
