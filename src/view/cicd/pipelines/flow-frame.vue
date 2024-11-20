@@ -6,7 +6,7 @@
       <div class="task-item1">
         <div class="header" style="cursor: pointer" v-if="transformIndex[props.y]?.ishowHeader">
           <el-tag effect="dark" round @click="editTask">
-            {{ taskName }}
+            {{ phaseName || '#test' }} <!-- 显示传递的阶段名称 -->
           </el-tag>
         </div>
 
@@ -24,7 +24,9 @@
         <div class="rectangle-container">
           <div class="rectangle" ref="rectangle">
             <div class="dashed-line left-dashed" ref="leftRectangle"></div>
-            <span class="text2">admin</span>
+            <span class="text2">
+              {{  taskName || '未命名' }}
+            </span>
             <div class="dashed-line right-dashed" ref="rightRectangle"></div>
           </div>
 
@@ -43,7 +45,7 @@
 
   </div>
 </template>
-  
+
 <script setup>
 import { reactive, ref, onMounted, watch } from 'vue'
 import { ElMessage, ElScrollbar, ElTag } from 'element-plus'
@@ -85,9 +87,13 @@ const props = defineProps({
   taskName: {
     type: String,
     required: false,
-    default: '#test'
+    default: '',
   },
-
+  phaseName: {
+    type: String,
+    required: false,
+    default: ''
+  },
 })
 const hover = ref(false)
 
@@ -123,11 +129,13 @@ watch(
     }
   }
 )
-
+onMounted(() => {
+  console.log('Received phaseName:', props.phaseName);
+  console.log('Received taskName:', props.taskName);
+});
 
 </script>
-  
+
 <style scoped>
 @import './style/flow-index.scss';
 </style>
-  

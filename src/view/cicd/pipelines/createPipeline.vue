@@ -21,9 +21,12 @@
               <el-col :span="12">
                 <el-form-item label="关联环境" required>
                   <el-select v-model="pipelineInfo.environment" placeholder="请选择关联环境">
-                    <el-option label="开发环境" value="dev"></el-option>
-                    <el-option label="测试环境" value="test"></el-option>
-                    <el-option label="生产环境" value="prod"></el-option>
+                    <el-option
+                        v-for="env in pipelineInfo.environmentOptions"
+                        :key="env.value"
+                        :label="env.label"
+                        :value="env.value"
+                    ></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -64,8 +67,8 @@
 
                 <div v-for="(taskGroup, groupIndex) in taskGrid" :key="groupIndex" class="task-group">
                   <div v-for="(task, taskIndex) in taskGroup" :key="taskIndex" class="flow-item">
-                    <flowFrame :x='groupIndex' :y='taskIndex' :transform-index="taskGroup"
-                      @editTask="editTask(groupIndex, taskIndex)"
+                    <flowFrame :x='groupIndex' :y='taskIndex' :transform-index="taskGroup" :phaseName="task.phaseName" :taskName="task.taskName"
+                               @editTask="editTask(groupIndex, taskIndex)"
                       @createTask="createTask(taskGroup, task, groupIndex, taskIndex)"
                       @handleCircleClick="handleCircleClick(groupIndex, taskIndex)"
                       @openAddTaskDialogFlow="openAddTaskDialogFlow" :is-show="true" />
@@ -148,7 +151,7 @@
         <template #footer>
           <el-button @click="addTaskDialogVisible = false">取消</el-button>
           <el-button type="primary" @click="confirmAddTask">确认</el-button>
-          <el-button type="danger" @click="deleteCurrentTask" v-if="isEditTask">删除</el-button>
+<!--          <el-button type="danger" @click="deleteCurrentTask" v-if="isEditTask">删除</el-button>-->
 
         </template>
       </el-dialog>
@@ -224,7 +227,9 @@ const gitUrl = route.query.gitUrl;
 // 表单数据模型
 const pipelineInfo = reactive({
   name: '',
-  environment: ''
+  environment: '',
+  environmentOptions: [] // 用于存储获取的环境选项
+
 })
 
 const repositoryInfo = reactive({
@@ -236,7 +241,7 @@ const repositoryInfo = reactive({
 })
 
 const tasks = ref([]) // 存储任务列表
-const newTask = reactive({ name: '', params: [] }) // 临时任务对象
+const newTask = reactive({ name: '',executor: '', params: [] }) // 临时任务对象
 const addTaskDialogVisible = ref(false) // 控制添加阶段弹窗的显示
 const repositoryDialogVisible = ref(false) // 控制关联代码库弹窗的显示
 
@@ -413,6 +418,10 @@ const loadAppDetails = async () => {
     if (res.code === 0 && res.data) {
       repositoryInfo.url = res.data.gitRepo || ''; // 填充代码库地址
       repositoryInfo.defaultBranch = res.data.branch || 'main'; // 填充默认分支
+      pipelineInfo.environmentOptions = res.data.envs.map(env => ({
+        label: env.envName,
+        value: env.envCode
+      }));
     } else {
       ElMessage.error(res.msg || '获取应用详情失败');
     }
@@ -426,9 +435,7 @@ const loadAppDetails = async () => {
 const confirmAddTask = () => {
   if (newTask.name) {
     tasks.value.push({ ...newTask })
-    newTask.name = ''
     newTask.params = [] // 重置参数
-    addTaskDialogVisible.value = false
 
     if (!taskGrid.value[index_Y.value]) {
       taskGrid.value[index_Y.value] = []; // 如果行不存在，则创建新的空行
@@ -439,8 +446,16 @@ const confirmAddTask = () => {
 
     // 确保列存在
     if (!taskGrid.value[index_X.value][index_Y.value]) {
-      taskGrid.value[index_X.value][index_Y.value] = { isFlowShow: true, transformIndex: 0, isShowwAdd: true, ishowHeader: true }; // 在指定位置添加一个子组件
+      taskGrid.value[index_X.value][index_Y.value] = {
+        isFlowShow: true,
+        transformIndex: 0,
+        isShowwAdd: true,
+        ishowHeader: true,
+        phaseName: newTask.name // 阶段的名称字段
+         }; // 在指定位置添加一个子组件
     }
+    newTask.name = ''
+    addTaskDialogVisible.value = false
 
     ElMessage.success('新阶段已添加')
   } else {
@@ -451,7 +466,7 @@ const confirmAddTask = () => {
 
 const confirmAddParallelTask = () => {
 
-
+  console.log("添加或修改任务")
   addParallelTaskDialogVisible.value = false
 
   if (!taskGrid.value[index_Y.value]) {
@@ -463,10 +478,13 @@ const confirmAddParallelTask = () => {
 
   // 确保列存在
   if (!taskGrid.value[index_X.value][index_Y.value]) {
-    taskGrid.value[index_X.value][index_Y.value] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: true, ishowHeader: false }; // 在指定位置添加一个子组件
-    taskGrid.value[index_X.value][index_Y.value - 1] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: false, ishowHeader: (index_Y.value - 1) == 0 ? true : false };
+    taskGrid.value[index_X.value][index_Y.value] = { isFlowShow: true, transformIndex: Date.now(), isShowwAdd: true, ishowHeader: false, phaseName: newTask.name,     taskName: newTask.name // 动态获取任务名称
+    }; // 在指定位置添加一个子组件
+    taskGrid.value[index_X.value][index_Y.value - 1] = { isFlowShow: true, transformIndex: Date.now(),taskName: newTask.name, isShowwAdd: false, ishowHeader: (index_Y.value - 1) == 0 ? true : false };
   }
 
+  newTask.name = '';
+  console.log('Updated taskGrid:', JSON.stringify(taskGrid.value, null, 2));
 
 
   ElMessage.success('并行任务已添加')
