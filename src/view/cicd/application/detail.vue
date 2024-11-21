@@ -155,7 +155,7 @@ const fetchDeployData = async () => {
         },
       ]; // 模拟返回的数据
       resolve(data);
-    }, 1000); // 模拟 1 秒延迟
+    }, 0.001); // 模拟 1 秒延迟
   });
 };
 const fetchEnvData = async (envCode) => {
@@ -245,7 +245,7 @@ const fetchPipelineData = async () => {
         },
       ]; // 模拟返回的数据
       resolve(data);
-    }, 1000); // 模拟 1 秒延迟
+    }, 0.001); // 模拟 1 秒延迟
   });
 };
 const fetchPipelines = async () => {
