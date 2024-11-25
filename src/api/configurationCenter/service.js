@@ -46,6 +46,13 @@ export const getServiceList = (params) => {
         params
     })
 }
+export const getRegistryList = (params) => {
+    return service({
+        url: '/configCenter/service/registry',
+        method: 'get',
+        params
+    })
+}
 export const deleteServiceByIds = (data) => {
     return service({
         url: '/configCenter/service',
