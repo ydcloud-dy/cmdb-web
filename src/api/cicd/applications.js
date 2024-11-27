@@ -11,6 +11,16 @@ export const createApplications = (data) => {
         }
     })
 }
+export const getAppPodList = (data) => {
+    return service({
+        url: '/cicd/applications/deploymentInfo',
+        method: 'post',
+        data,
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}
 export const syncApplicationBranchs = (id) => {
     return service({
         url: `/cicd/applications/${id}/syncBranches`,

@@ -266,10 +266,11 @@
                 <el-option
                     v-for="(item, index) in registryList"
                     :key="index"
-                    :label="item.name"
-                    :value="item.name"
+                    :label="item.config.url"
+                :value="item.config.url"
                 />
               </el-select>
+
             </el-form-item>
 
             <el-form-item label="空间名称：" required>
@@ -360,7 +361,7 @@
                   v-model="popupTask.version"
                   placeholder="请选择kubectl版本"
               >
-                <el-option label="v1.23.6" value="1"></el-option>
+                <el-option label="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3" value="1"></el-option>
                 <el-option label="v1.23.6" value="2"></el-option>
               </el-select>
             </el-form-item>
@@ -376,8 +377,13 @@
                   v-model="popupTask.resource"
                   placeholder="请选择资源类型"
               >
-                <el-option label="douslfjls" value="1"></el-option>
-                <el-option label="woejojdsf" value="2"></el-option>
+                <el-option label="Deployment" value="1"></el-option>
+                <el-option label="Statefulset" value="2"></el-option>
+                <el-option label="DaemonSet" value="3"></el-option>
+                <el-option label="Service" value="4"></el-option>
+                <el-option label="Ingress" value="5"></el-option>
+                <el-option label="ConfigMap" value="6"></el-option>
+                <el-option label="Secret" value="7"></el-option>
               </el-select>
             </el-form-item>
 
@@ -509,8 +515,9 @@ import { ElMessage, ElScrollbar } from "element-plus";
 import { getRegistryList} from "@/api/configurationCenter/service";
 import { useRoute } from "vue-router";
 import flowFrame from "./flow-frame.vue";
-import { describeApplications } from "@/api/cicd/applications";
+import {createApplications, describeApplications} from "@/api/cicd/applications";
 import { getBuildEnvList} from "@/api/configurationCenter/buildEnv";
+import {createPipelines} from "@/api/cicd/pipelines";
 
 const taskGrid = ref([]);
 
@@ -529,6 +536,7 @@ const gitUrl = route.query.gitUrl;
 
 // 表单数据模型
 const pipelineInfo = reactive({
+  namespace: "",
   name: "",
   environment: "",
   environmentOptions: [], // 用于存储获取的环境选项
@@ -536,6 +544,7 @@ const pipelineInfo = reactive({
 
 const repositoryInfo = reactive({
   url: "",
+  appCode: "",
   defaultBranch: "",
   voucherType: "",
   branch: "",
@@ -558,7 +567,7 @@ onMounted(async () => {
     if (response && response.data && response.data.list) {
       registryList.value = response.data.list;
       if (registryList.value.length > 0) {
-        popupTask.value.warehouse = registryList.value[0].name; // 默认选中第一个仓库
+        popupTask.value.warehouse = registryList.value[0].config.url; // 默认选中第一个仓库的 URL
       }
     }
   } catch (error) {
@@ -708,9 +717,12 @@ const loadAppDetails = async () => {
     if (res.code === 0 && res.data) {
       repositoryInfo.url = res.data.gitRepo || ""; // 填充代码库地址
       repositoryInfo.defaultBranch = res.data.branch || "main"; // 填充默认分支
+      repositoryInfo.appCode = res.data.appCode
       pipelineInfo.environmentOptions = res.data.envs.map((env) => ({
         label: env.envName,
         value: env.envCode,
+        namespace: env.namespace,
+        clusterName: env.clusterName, // 确保包含 clusterName
       }));
     } else {
       ElMessage.error(res.msg || "获取应用详情失败");
@@ -877,15 +889,118 @@ const handlePoputask = (value) => {
 const removeTask = (index) => {
   tasks.value.splice(index, 1);
 };
+function getRegistryCredentials(selectedWarehouse) {
+  // 在 registryList 中查找匹配的仓库 URL
+  const registry = registryList.value.find(item => item.config.url === selectedWarehouse);
+
+  if (registry) {
+    return {
+      username: registry.config.username, // 获取用户名
+      password: registry.config.password, // 获取密码
+    };
+  }
+
+  // 如果没有匹配的仓库，返回默认值
+  return {
+    username: "",
+    password: "",
+  };
+}
 
 // 保存流水线
-const savePipeline = () => {
+const savePipeline = async () => {
   console.log(taskGrid.value)
-  console.log(popupTask.value)
   console.log(pipelineInfo)
-  ElMessage.success("流水线已保存");
-};
+  console.log(popupTask.value)
+  // 目标转换逻辑
+// 目标转换逻辑
+  const backendJson = {
+    name: pipelineInfo.name, // 示例固定值，或者从 pipelineInfo 动态设置
+    app_name: repositoryInfo.appCode, // 示例固定值，或者从 pipelineInfo 动态设置
+    env_name: pipelineInfo.environment, // 从 pipelineInfo 中获取环境
+    build_script: "#!/bin/sh", // 示例固定值
+    k8s_namespace:  getEnvProperty(pipelineInfo.environment, 'namespace'), // 示例固定值
+    k8s_cluster_name: getEnvProperty(pipelineInfo.environment, 'clusterName'), // 示例固定值
+    // base_image: "registry.cn-hangzhou.aliyuncs.com/dyclouds/alpine:latest", // 示例固定值
+    // dockerfile_path: "./Dockerfile", // 示例固定值
+    // image_name: "yiyuetong", // 示例固定值
+    // image_tag: "v1.0.0", // 示例固定值
+    registry_url: `${popupTask.value.warehouse}/${popupTask.value.spatialName}`, // 示例固定值
+    registry_user:  getRegistryCredentials(popupTask.value.warehouse).username, // 示例固定值
+    registry_pass: getRegistryCredentials(popupTask.value.warehouse).password, // 示例固定值
+    git_url: "https://gitee.com/dycloud5416/spring-boot-helloWorld.git", // 示例固定值
+    git_branch: "main", // 示例固定值
+    git_commit_id: "", // 示例固定值或动态值
+    stages: taskGrid.value.map((stage, stageIndex) => ({
+      name: stageIndex === 0 ? "build-stage" : stageIndex === 1 ? "docker-stage" : "deploy-stage", // 按顺序命名阶段
+      task_list: stage.taskList.map((task, taskIndex) => ({
+        name: task.name === "maven" ? "build-project" : task.name,
+        branch: task.branch || `${taskIndex + 1}`,
+        plugin:
+            task.name === "maven"
+                ? "执行脚本"
+                : task.name === "build-and-push"
+                    ? "镜像打包并推送到仓库"
+                    : task.name === "deploy"
+                        ? "部署到Kubernetes"
+                        : "",
+        image:
+            task.name === "deploy"
+                ? "swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3"
+                : task.image || "",
+        script: task.textarea || "",
+        spatial_name: task.spatialName || "",
+        warehouse:
+            task.name === "build-and-push"
+                ? "registry.cn-hangzhou.aliyuncs.com/dyclouds"
+                : task.warehouse || "",
+        mirror_tag: task.mirrorTag || "",
+        dockerfile: task.dockerfile || "",
+        context_path: task.contextPath || "",
+        product_name: task.productName || "",
+        product_path: task.productPath || "",
+        version: task.version || "",
+        resource: task.resource || "",
+        yaml_resource: task.yamlResource || "",
+        goal_resource: task.goalResource || "",
+        open_script: task.openScript || "",
+      })),
+    })),
+  };
+  // 查找匹配的 environmentOption
+  const environment = pipelineInfo.environment;
+  const matchedOption = pipelineInfo.environmentOptions.find(option => option.value === environment);
+// 如果找到匹配的环境，赋值 namespace
+  if (matchedOption) {
+    backendJson.k8s_namespace = matchedOption.namespace;
+  } else {
+    // 如果没有匹配项，可以设置一个默认值
+    backendJson.k8s_namespace = "default";
+  }
+  console.log(backendJson)
+  let res;
+  res = await createPipelines(backendJson);
+  // 处理 API 响应
+  if (res && res.code === 0) {
+    console.log(res)
+    ElMessage.success("流水线已保存");
+  } else {
+    ElMessage({
+      type: 'error',
+      message: res ? res.msg : '操作失败'
+    });
+  }
 
+};
+// 辅助函数，用于根据环境值查找对应的属性
+function getEnvProperty(environment, property) {
+  if (!pipelineInfo.environmentOptions || !Array.isArray(pipelineInfo.environmentOptions)) {
+    console.error('environmentOptions 未正确加载或不是数组:', pipelineInfo.environmentOptions);
+    return ''; // 返回空字符串以避免报错
+  }
+  const env = pipelineInfo.environmentOptions.find(env => env.value === environment);
+  return env ? env[property] : ''; // 找到匹配项则返回指定属性，否则返回空字符串
+}
 // 取消操作
 const cancel = () => {
   ElMessage.info("操作已取消");

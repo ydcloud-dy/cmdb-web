@@ -56,7 +56,7 @@
     </div>
 
     <h3 class="section-title">部署信息</h3>
-    <el-table v-if="deployData.length > 0" :data="deployData" style="width: 100%;" border>
+    <el-table v-if="deployData.length > 0" :data="podList" style="width: 100%;" border>
       <el-table-column prop="instanceID" label="实例 ID" />
       <el-table-column prop="hostIP" label="宿主机 IP" />
       <el-table-column prop="containerIP" label="容器 IP" />
@@ -106,7 +106,7 @@
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { useRouter, useRoute } from 'vue-router'
-import { describeApplications } from '@/api/cicd/applications'
+import { describeApplications,getAppPodList } from '@/api/cicd/applications'
 
 const router = useRouter()
 const route = useRoute()
@@ -170,52 +170,67 @@ const handleDeployAction = (row) => {
 };
 // 页面加载时获取部署信息
 onMounted(async () => {
-  try {
-    const data = await fetchDeployData();
-    deployData.value = data; // 将返回数据赋值
-  } catch (error) {
-    console.error("获取部署信息失败:", error);
-  }
-  try {
-    const deploydata = await fetchPipelineData();
-    pipelineData.value = deploydata; // 将返回数据赋值
-  } catch (error) {
-    console.error("获取流水线数据失败:", error);
-  }
+
+
 });
 const configureScaling = () => {
   console.log(`配置当前环境的伸缩策略: ${currentEnv.value}`)
 }
 
 const fetchAppDetails = async () => {
-  const res = await describeApplications(id)
-  if (res.code === 0) {
-    const data = res.data
-    appDetails.value = {
-      name: data.name,
-      gitRepo: data.gitRepo,
-      branch: data.branch,
-      appName: data.appName,
-      appCode: data.appCode,
-      appDesc: data.appDesc,
-      language: data.language,
-      appType: data.appType || '无状态应用',
-      deploymentType: data.deploymentType || '容器部署',
-      createdAt: data.CreatedAt,
-      monitorEnabled: data.monitorEnabled,
-      owners: data.owner || [],
-      developers: data.develop || [],
+  try {
+    const res = await describeApplications(id);
+    if (res.code === 0) {
+      const data = res.data;
+
+      // 确保 `envs` 和其他字段初始化
+      appDetails.value = {
+        name: data.name || '-',
+        gitRepo: data.gitRepo || '-',
+        branch: data.branch || 'main',
+        appName: data.appName || '-',
+        appCode: data.appCode || '-',
+        appDesc: data.appDesc || '-',
+        language: data.language || '未知',
+        appType: data.appType || '无状态应用',
+        deploymentType: data.deploymentType || '容器部署',
+        createdAt: data.CreatedAt || '-',
+        monitorEnabled: data.monitorEnabled || false,
+        owners: data.owner || [],
+        developers: data.develop || [],
+        envs: data.envs || [], // 确保 envs 不为空
+
+      };
+      // 初始化环境列表
+      availableEnvs.value = (data.envs || []).map(env => ({
+        envCode: env.envCode,
+        envName: env.envName,
+      }));
+
+      // 设置默认环境
+      if (availableEnvs.value.length > 0) {
+        currentEnv.value = availableEnvs.value[0]?.envCode || '';
+        envData.value = data.envs || [];
+      } else {
+        console.warn('未找到可用环境数据');
+        currentEnv.value = '';
+        envData.value = [];
+      }
+    } else {
+      console.error('获取应用详情失败:', res.msg);
+      appDetails.value = {};
+      availableEnvs.value = [];
+      currentEnv.value = '';
+      envData.value = [];
     }
-    availableEnvs.value = data.envs.map(env => ({
-      envCode: env.envCode,
-      envName: env.envName,
-    }))
-    currentEnv.value = availableEnvs.value[0]?.envCode || ''
-    envData.value = data.envs || []
-  } else {
-    console.error('获取应用详情失败:', res.msg)
+  } catch (error) {
+    console.error('加载应用详情失败:', error);
+    appDetails.value = {};
+    availableEnvs.value = [];
+    currentEnv.value = '';
+    envData.value = [];
   }
-}
+};
 // 模拟获取流水线数据的接口
 const fetchPipelineData = async () => {
   // 模拟延迟和返回数据
@@ -257,13 +272,64 @@ const fetchPipelines = async () => {
   }
 }
 // 操作流水线的事件
+const fetchPodList = async (clusterId) => {
+  console.log('Fetching Pod list for clusterId:', clusterId);
+
+  if (!clusterId) {
+    console.error('clusterId 未提供');
+    return;
+  }
+
+  const requestData = {
+    cluster_id: clusterId, // 动态传入 clusterId
+    app_code: `app=${appDetails.value.appCode}`, // 从应用详情获取 appCode
+  };
+
+  try {
+    const res = await getAppPodList(requestData);
+    if (res.code === 0 && res.data && res.data.items) {
+      podList.value = res.data.items.map(item => ({
+        instanceID: item.metadata.name,
+        hostIP: item.status.hostIP,
+        containerIP: item.status.podIP,
+        rebootCount: item.status.containerStatuses[0]?.restartCount || 0,
+        createdAt: item.metadata.creationTimestamp,
+        version: item.status.containerStatuses[0]?.image.split(':')[1] || 'Unknown',
+        status: item.status.phase,
+        resources: `${item.spec.containers[0]?.resources.requests?.cpu || '-'} CPU / ${item.spec.containers[0]?.resources.requests?.memory || '-'} RAM`,
+      }));
+      console.log('Pod list fetched:', podList.value);
+    } else {
+      console.error('Failed to fetch Pod list:', res.msg);
+    }
+  } catch (error) {
+    console.error('Error fetching Pod list:', error);
+  }
+};
 
 
 const selectedEnvCode = ref("");
-const handleEnvChange = (envCode) => {
-  console.log(envCode)
+const handleEnvChange = async (envCode) => {
+  console.log('Environment changed to:', envCode);
   selectedEnvCode.value = envCode;
+
+  // 检查 appDetails.value.envs 是否存在并包含数据
+  if (!appDetails.value.envs || appDetails.value.envs.length === 0) {
+    console.error('appDetails.envs 数据为空或未初始化');
+    return;
+  }
+
+  // 根据当前环境查找对应的 clusterId
+  const currentEnv = appDetails.value.envs.find((env) => env.envCode === envCode);
+  if (!currentEnv) {
+    console.error('未找到对应环境的配置');
+    return;
+  }
+
+  // 使用找到的 clusterId 调用 fetchPodList
+  await fetchPodList(currentEnv.clusterId);
 };
+
 const createPipeline = () => {
   console.log('创建流水线')
   console.log(appDetails.value)
@@ -278,15 +344,47 @@ const createPipeline = () => {
     },
   });
 }
+const podList = ref([]); // 存储获取到的 Pod 列表
 
+// 获取 Pod 列表
 const handlePipelineAction = (pipeline) => {
   console.log(`操作流水线: ${pipeline.branch}`)
 }
 
-onMounted(() => {
-  fetchAppDetails()
-  fetchPipelines()
-})
+onMounted(async () => {
+  try {
+    // 加载应用详情
+    await fetchAppDetails();
+    console.log(appDetails.value)
+    // 确保 envs 数据已正确加载
+    if (appDetails.value.envs?.length > 0) {
+      const defaultEnvCode = availableEnvs.value[0]?.envCode; // 默认第一个环境
+      selectedEnvCode.value = defaultEnvCode;
+
+      const currentEnv = appDetails.value.envs.find(env => env.envCode === defaultEnvCode);
+      if (currentEnv?.clusterId) {
+        // 使用 clusterId 加载 Pod 列表
+        await fetchPodList(currentEnv.clusterId);
+      } else {
+        console.warn('未找到默认环境的 clusterId');
+      }
+    } else {
+      console.warn('没有可用的环境数据，跳过 Pod 列表加载');
+    }
+
+    // 加载流水线数据
+    // await fetchPipelines();
+
+    // 加载部署数据
+    const deployDataRes = await fetchDeployData();
+    deployData.value = deployDataRes;
+
+    const pipelineDataRes = await fetchPipelineData();
+    pipelineData.value = pipelineDataRes;
+  } catch (error) {
+    console.error('初始化失败:', error);
+  }
+});
 </script>
 
 <style scoped>
