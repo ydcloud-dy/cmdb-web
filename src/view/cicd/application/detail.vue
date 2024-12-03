@@ -56,7 +56,7 @@
     </div>
 
     <h3 class="section-title">部署信息</h3>
-    <el-table v-if="deployData.length > 0" :data="podList" style="width: 100%;" border>
+    <el-table v-if="deployData.length > 0" :data="podList" class="deploy-table"  style="width: 100%;" border>
       <el-table-column prop="instanceID" label="实例 ID" />
       <el-table-column prop="hostIP" label="宿主机 IP" />
       <el-table-column prop="containerIP" label="容器 IP" />
@@ -86,11 +86,18 @@
         创建流水线
       </el-button>
     </div>
-    <el-table v-if="pipelineData.length > 0" :data="pipelineData" style="width: 100%;" border>
-      <el-table-column prop="status" label="运行状态" />
+    <el-table v-if="pipelineData.length > 0" :data="pipelineData" class="pipeline-table" style="width: 100%;" border>
+      <el-table-column prop="status" label="运行状态" >
+        <template #default="scope">
+          <el-tag
+              :type="handlePipelinesStatus(scope.row) === 'Succeeded' ? 'success' : 'danger'"
+          >{{ handlePipelinesStatus(scope.row) }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="user" label="运行人" />
       <el-table-column prop="branch" label="分支" />
-      <el-table-column prop="lastRunTime" label="最近运行时间" />
+      <el-table-column prop="last_run_time" label="最近运行时间" />
+
       <el-table-column prop="duration" label="耗时" />
       <el-table-column label="操作">
         <template #default="scope">
@@ -107,6 +114,7 @@ import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { useRouter, useRoute } from 'vue-router'
 import { describeApplications,getAppPodList } from '@/api/cicd/applications'
+import {getPipelinesList, getPipelinesStatus} from "@/api/cicd/pipelines";
 
 const router = useRouter()
 const route = useRoute()
@@ -122,7 +130,9 @@ const currentEnv = ref('') // 当前选中的环境
 const goToApplications = () => {
   router.push({ name: 'applications' })
 }
-
+const handlePipelinesStatus = (row) => {
+  return row.status;
+};
 const formatDate = (date) => {
   return date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '-'
 }
@@ -169,10 +179,7 @@ const handleDeployAction = (row) => {
   console.log("操作部署实例:", row);
 };
 // 页面加载时获取部署信息
-onMounted(async () => {
 
-
-});
 const configureScaling = () => {
   console.log(`配置当前环境的伸缩策略: ${currentEnv.value}`)
 }
@@ -231,46 +238,31 @@ const fetchAppDetails = async () => {
     envData.value = [];
   }
 };
+
 // 模拟获取流水线数据的接口
-const fetchPipelineData = async () => {
-  // 模拟延迟和返回数据
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const data = [
-        {
-          status: "成功",
-          user: "admin",
-          branch: "main",
-          lastRunTime: "2024-11-19T10:45:00",
-          duration: "10m 23s",
-        },
-        {
-          status: "失败",
-          user: "developer",
-          branch: "feature/update",
-          lastRunTime: "2024-11-18T15:20:00",
-          duration: "5m 12s",
-        },
-        {
-          status: "运行中",
-          user: "tester",
-          branch: "release/v1.0.0",
-          lastRunTime: "2024-11-19T12:30:00",
-          duration: "2m 45s",
-        },
-      ]; // 模拟返回的数据
-      resolve(data);
-    }, 0.001); // 模拟 1 秒延迟
-  });
-};
 const fetchPipelines = async () => {
-  const res = await getPipelineList(id)
-  if (res.code === 0) {
-    pipelineData.value = res.data.list || []
-  } else {
-    console.error('获取流水线数据失败:', res.msg)
+  try {
+    const res = await getPipelinesStatus({appCode: appDetails.value.appCode,envCode:selectedEnvCode.value,cluster_id:cluster_id.value,namespace:selectNamespace.value});  // 调用接口获取流水线数据
+    if (res.code === 0 && res.data && Object.keys(res.data).length !== 0) {
+      // 从返回的数据中提取流水线列表
+      // 去掉时间中的 +0800 CST 部分
+      const formattedData = {
+        ...res.data,
+        last_run_time: res.data.last_run_time.replace(/([+\-]\d{4} )?[A-Za-z]{3}$/, '') // 去掉时区部分
+      };
+
+      pipelineData.value = [formattedData];
+
+    } else {
+      console.error('获取流水线数据失败:', res.msg);
+      pipelineData.value = []
+    }
+  } catch (error) {
+    console.error('获取流水线数据时发生错误:', error);
   }
-}
+};
+
+const cluster_id = ref()
 // 操作流水线的事件
 const fetchPodList = async (clusterId) => {
   console.log('Fetching Pod list for clusterId:', clusterId);
@@ -279,10 +271,10 @@ const fetchPodList = async (clusterId) => {
     console.error('clusterId 未提供');
     return;
   }
-
+  cluster_id.value = clusterId
   const requestData = {
     cluster_id: clusterId, // 动态传入 clusterId
-    app_code: `app=${appDetails.value.appCode}`, // 从应用详情获取 appCode
+    app_code: `app=${appDetails.value.appCode}-${selectedEnvCode.value}`, // 从应用详情获取 appCode
   };
 
   try {
@@ -293,10 +285,10 @@ const fetchPodList = async (clusterId) => {
         hostIP: item.status.hostIP,
         containerIP: item.status.podIP,
         rebootCount: item.status.containerStatuses[0]?.restartCount || 0,
-        createdAt: item.metadata.creationTimestamp,
+        createdAt: item.metadata.creationTimestamp ? formatDate(item.metadata.creationTimestamp) : 'Invalid Date',
         version: item.status.containerStatuses[0]?.image.split(':')[1] || 'Unknown',
         status: item.status.phase,
-        resources: `${item.spec.containers[0]?.resources.requests?.cpu || '-'} CPU / ${item.spec.containers[0]?.resources.requests?.memory || '-'} RAM`,
+        resources: `${item.spec.containers[0]?.resources.requests?.cpu ?? '-'} CPU / ${item.spec.containers[0]?.resources.requests?.memory ?? '-'} RAM`,
       }));
       console.log('Pod list fetched:', podList.value);
     } else {
@@ -325,9 +317,13 @@ const handleEnvChange = async (envCode) => {
     console.error('未找到对应环境的配置');
     return;
   }
+  console.log(appDetails.value.envs)
+  console.log(currentEnv.clusterId)
 
+  console.log("当前环境的集群id为：",currentEnv.clusterId)
   // 使用找到的 clusterId 调用 fetchPodList
   await fetchPodList(currentEnv.clusterId);
+  await fetchPipelines()
 };
 
 const createPipeline = () => {
@@ -350,7 +346,7 @@ const podList = ref([]); // 存储获取到的 Pod 列表
 const handlePipelineAction = (pipeline) => {
   console.log(`操作流水线: ${pipeline.branch}`)
 }
-
+const selectNamespace = ref("")
 onMounted(async () => {
   try {
     // 加载应用详情
@@ -362,6 +358,9 @@ onMounted(async () => {
       selectedEnvCode.value = defaultEnvCode;
 
       const currentEnv = appDetails.value.envs.find(env => env.envCode === defaultEnvCode);
+      console.log(currentEnv)
+      selectNamespace.value = currentEnv.namespace
+      console.log("================================")
       if (currentEnv?.clusterId) {
         // 使用 clusterId 加载 Pod 列表
         await fetchPodList(currentEnv.clusterId);
@@ -379,8 +378,8 @@ onMounted(async () => {
     const deployDataRes = await fetchDeployData();
     deployData.value = deployDataRes;
 
-    const pipelineDataRes = await fetchPipelineData();
-    pipelineData.value = pipelineDataRes;
+    await fetchPipelines();
+    // pipelineData.value = pipelineDataRes;
   } catch (error) {
     console.error('初始化失败:', error);
   }
@@ -392,7 +391,11 @@ onMounted(async () => {
   padding: 20px;
   color: #333;
 }
-
+/* 流水线表格样式 */
+.pipeline-table .el-table__header {
+  background-color: #f0f5f9; /* 设置背景色 */
+  color: #333; /* 设置文字颜色 */
+}
 .section-title {
   font-size: 18px;
   color: #409EFF;

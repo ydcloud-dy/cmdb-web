@@ -64,12 +64,13 @@ export default {
 
 <script setup>
 
-import { createApplications,deleteApplications,updateApplications,getApplicationsList,describeApplications,deleteApplicationsByIds} from "@/api/cicd/applications";
+import { createApplications,deleteApplications,updateApplications,describeApplications,deleteApplicationsByIds} from "@/api/cicd/applications";
 import FormBlock from './form.vue'
 import TableBlock from './table.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
+import {getPipelinesList} from "@/api/cicd/pipelines";
 
 const form = ref({})
 const page = ref(1)
@@ -112,7 +113,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getApplicationsList({ page: page.value, pageSize: pageSize.value, keyword: searchInfo.value.name })
+  const table = await getPipelinesList({ page: page.value, pageSize: pageSize.value, keyword: searchInfo.value.name })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total

@@ -11,3 +11,17 @@ export const createPipelines = (data) => {
         }
     })
 }
+export const getPipelinesList = (params) => {
+    return service({
+        url: '/cicd/pipelines',
+        method: 'get',
+        params
+    })
+}
+export const getPipelinesStatus = (params) => {
+    return service({
+        url: '/cicd/pipelinesStatus',
+        method: 'get',
+        params
+    })
+}
