@@ -25,3 +25,9 @@ export const getPipelinesStatus = (params) => {
         params
     })
 }
+export const DescribePipelines = (id) => {
+    return service({
+        url: `/cicd/pipelines/${id}`,
+        method: 'get',
+    })
+}

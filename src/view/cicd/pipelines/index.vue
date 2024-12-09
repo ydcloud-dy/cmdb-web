@@ -26,7 +26,7 @@
 <!--        </el-popover>-->
       </div>
       <div v-if="tableData">
-        <TableBlock :table-data="tableData" @update="handleUpdate" @search="handlesortChange" @test="handleTest"  @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
+        <TableBlock :table-data="tableData" @run="handleRun" @search="handlesortChange" @test="handleTest"  @select="handleSelectionChange" @delete="handleDelete" @region="handleUpdateRegion" />
       </div>
     </div>
     <div class="dycloud-pagination">
@@ -115,6 +115,7 @@ const handleCurrentChange = (val) => {
 const getTableData = async() => {
   const table = await getPipelinesList({ page: page.value, pageSize: pageSize.value, keyword: searchInfo.value.name })
   if (table.code === 0) {
+    console.log('Pipeline List:', table.data.list);  // 检查这里
     tableData.value = table.data.list
     total.value = table.data.total
     page.value = table.data.page
@@ -127,7 +128,7 @@ getTableData()
 // 更新数据模态框
 const dialogFormVisible = ref(false)
 const type = ref('')
-const handleUpdate = async(row) => {
+const handleRun = async(row) => {
   const res = await describeApplications(row.ID)
   type.value = 'update'
   title.value = '更新'

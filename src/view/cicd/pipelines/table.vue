@@ -19,16 +19,16 @@
           <el-link @click.prevent="goToDetail(scope.row.ID)" style="cursor: pointer;">{{ scope.row.name }}</el-link>
         </template>
       </el-table-column>
-      <el-table-column align="left" label="应用名称" prop="full_name" />
+      <el-table-column align="left" label="应用名称" prop="app_name" />
       <el-table-column align="left"  label="环境" prop="env_name" />
-      <el-table-column align="left" label="创建人" prop="build_path" />
+      <el-table-column align="left" label="创建人" prop="CreatedName" />
 
       <el-table-column align="left" label="创建时间" prop="CreatedAt" :formatter="formatDate" />
       <el-table-column align="left" label="修改时间" prop="UpdatedAt" :formatter="formatDate" />
 
       <el-table-column align="left" label="操作">
         <template #default="scope">
-          <el-button size="small" type="primary" link icon="edit" @click="handleUpdate(scope.row)">编辑</el-button>
+          <el-button size="small" type="primary" link icon="edit" @click="handleRun(scope.row)">运行</el-button>
           <el-popover v-model="scope.row.visible" placement="top">
             <p>确定要删除吗？</p>
             <div style="text-align: right; margin-top: 8px;">
@@ -52,7 +52,7 @@ import { toSQLLine } from '@/utils/stringFun'
 import { useRouter } from 'vue-router' // 使用 Vue Router 进行页面跳转
 const router = useRouter() // 初始化 router
 
-const emit = defineEmits(['update', 'delete', 'search', 'region', 'test'])
+const emit = defineEmits(['run', 'delete', 'search', 'region', 'test'])
 defineProps({
   tableData: {
     default: function() {
@@ -81,8 +81,8 @@ const sortChange = ({ prop, order }) => {
 }
 
 // 更新
-const handleUpdate = (value) => {
-  emit('update', value)
+const handleRun = (value) => {
+  emit('run', value)
 }
 
 // 同步Region
@@ -96,7 +96,10 @@ const handleTest = (value) => {
 
 // 跳转到详情页
 const goToDetail = (id) => {
-  router.push({ name: 'applicationDetail', query: { id: id } })
+  console.log(id)
+  router.push({ name: 'pipelineDetail', query: { id: id } })
+  // router.push({ path: '/layout/cicd/pipelineDetail' });
+
 }
 // 删除
 const handleDelete = (value) => {
