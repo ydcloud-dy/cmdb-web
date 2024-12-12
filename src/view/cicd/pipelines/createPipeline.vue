@@ -933,6 +933,10 @@ const savePipeline = async () => {
     git_commit_id: "", // 示例固定值或动态值
     stages: taskGrid.value.map((stage, stageIndex) => ({
       name: stageIndex === 0 ? "build-stage" : stageIndex === 1 ? "docker-stage" : "deploy-stage", // 按顺序命名阶段
+      params: stage.params.map(param => ({
+        name: param.name,
+        defaultValue: param.defaultValue
+      })),
       task_list: stage.taskList.map((task, taskIndex) => ({
         name: task.name === "maven" ? "build-project" : task.name,
         branch: task.branch || `${taskIndex + 1}`,
@@ -978,18 +982,18 @@ const savePipeline = async () => {
     backendJson.k8s_namespace = "default";
   }
   console.log(backendJson)
-  let res;
-  res = await createPipelines(backendJson);
-  // 处理 API 响应
-  if (res && res.code === 0) {
-    console.log(res)
-    ElMessage.success("流水线已保存");
-  } else {
-    ElMessage({
-      type: 'error',
-      message: res ? res.msg : '操作失败'
-    });
-  }
+  // let res;
+  // res = await createPipelines(backendJson);
+  // // 处理 API 响应
+  // if (res && res.code === 0) {
+  //   console.log(res)
+  //   ElMessage.success("流水线已保存");
+  // } else {
+  //   ElMessage({
+  //     type: 'error',
+  //     message: res ? res.msg : '操作失败'
+  //   });
+  // }
 
 };
 // 辅助函数，用于根据环境值查找对应的属性

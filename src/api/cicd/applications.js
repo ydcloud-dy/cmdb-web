@@ -64,7 +64,13 @@ export const describeApplications = (id) => {
         method: 'get',
     })
 }
-
+export const describeApplicationByName = (params) => {
+    return service({
+        url: '/cicd/applicationsByName',
+        method: 'get',
+        params
+    })
+}
 
 export const getApplicationsList = (params) => {
     return service({
