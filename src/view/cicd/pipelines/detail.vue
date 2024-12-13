@@ -665,12 +665,33 @@ const confirmRepository = () => {
 };
 const registryList = ref([]); // 用于存储返回的注册表列表
 
-const savePipeline = async () => {
-  console.log(taskGrid.value)
-  console.log(popupTask.value)
-}
-const buildEnvList = ref([]);
+function getRegistryCredentials(selectedWarehouse) {
+  // 在 registryList 中查找匹配的仓库 URL
+  const registry = registryList.value.find(item => item.config.url === selectedWarehouse);
 
+  if (registry) {
+    return {
+      username: registry.config.username, // 获取用户名
+      password: registry.config.password, // 获取密码
+    };
+  }
+
+  // 如果没有匹配的仓库，返回默认值
+  return {
+    username: "",
+    password: "",
+  };
+}
+
+const buildEnvList = ref([]);
+function getEnvProperty(environment, property) {
+  if (!pipelineInfo.environmentOptions || !Array.isArray(pipelineInfo.environmentOptions)) {
+    console.error('environmentOptions 未正确加载或不是数组:', pipelineInfo.environmentOptions);
+    return ''; // 返回空字符串以避免报错
+  }
+  const env = pipelineInfo.environmentOptions.find(env => env.value === environment);
+  return env ? env[property] : ''; // 找到匹配项则返回指定属性，否则返回空字符串
+}
 const confirmAddTask = () => {
   if (isEditTask.value) {
     // 修改任务
@@ -862,9 +883,11 @@ const repositoryInfo = reactive({
   branch: "",
   codeSourceStatus: 0,
 });
+let OldData = ref()
 let app_code = ""
 onMounted(async () => {
   console.log("Pipeline ID:", id);
+  console.log(taskGrid.value)
 
 
   try {
@@ -872,12 +895,45 @@ onMounted(async () => {
 
     if (res.code === 0 && res.data) {
       const data = res.data;
+      OldData.value = data
       repositoryInfo.url = data.git_url
       repositoryInfo.appCode = data.app_name
       repositoryInfo.defaultBranch = data.git_branch
       repositoryInfo.branch = data.git_branch
+
       const formattedCreatedAt = dayjs(data.CreatedAt).format("YYYY-MM-DD HH:mm:ss");
       app_code = data.app_name
+      // 遍历每个 stage
+      data.stages.forEach(stage => {
+        const tasks = stage.task_list.map(task => ({
+          transformIndex: 0,
+          name: task.name, // 任务名称
+          branch: task.branch, // 任务分支
+          image: task.image || '', // 目标资源
+          voucherType: "1", // 脚本类型
+          textarea: task.script || '#!/bin/sh', // 执行脚本
+          spatialName: task.spatial_name || '', // 空间名称
+          warehouse: task.warehouse || '', // 镜像仓库
+          mirrorTag: task.mirror_tag || '', // 镜像标签
+          dockerfile: task.dockerfile || '', // Dockerfile
+          contextPath: task.context_path || '', // ContextPath
+          productName: task.product_name || '', // 产品名称
+          productPath: task.product_path || '', // 产品路径
+          version: task.version || '', // 版本
+          resource: task.resource || '', // 资源类型
+          yamlResource: task.yaml_resource || '', // YAML资源
+          goalResource: task.goal_resource || '', // 目标资源
+          openScript: task.open_script || '' // 执行脚本
+        }));
+
+        // 将任务添加到 taskGrid.value 中
+        taskGrid.value.push({
+          name: stage.name, // 阶段名称
+          params: stage.params || [], // 填充阶段的参数
+          taskList: tasks // 填充任务列表
+        });
+      });
+
       tableData.push(
           { label: "应用标识", value: data.app_name },
           { label: "仓库地址", value: data.git_url },
@@ -892,7 +948,7 @@ onMounted(async () => {
   } catch (error) {
     console.error("请求错误: ", error);
   }
-
+  console.log()
 
 
   await loadAppDetails(); // 确保调用接口
@@ -923,6 +979,80 @@ onMounted(async () => {
     console.error('Error fetching build environment list:', error);
   }
 })
+const savePipeline = async () => {
+  console.log(taskGrid.value)
+  console.log(popupTask.value)
+  console.log(OldData.value)
+  console.log("--------------------------------'")
+  const backendJson = {
+    name: OldData.value.name, // 示例固定值，或者从 pipelineInfo 动态设置
+    app_name: repositoryInfo.appCode, // 示例固定值，或者从 pipelineInfo 动态设置
+    env_name: OldData.value.env_name, // 从 pipelineInfo 中获取环境
+    build_script: "#!/bin/sh", // 示例固定值
+    k8s_namespace:  getEnvProperty(pipelineInfo.environment, 'namespace'), // 示例固定值
+    k8s_cluster_name: OldData.value.k8s_cluster_name, // 示例固定值
+    // base_image: "registry.cn-hangzhou.aliyuncs.com/dyclouds/alpine:latest", // 示例固定值
+    // dockerfile_path: "./Dockerfile", // 示例固定值
+    // image_name: "yiyuetong", // 示例固定值
+    // image_tag: "v1.0.0", // 示例固定值
+    registry_url: `${popupTask.value.warehouse}/${popupTask.value.spatialName}`, // 示例固定值
+    registry_user:  getRegistryCredentials(popupTask.value.warehouse).username, // 示例固定值
+    registry_pass: getRegistryCredentials(popupTask.value.warehouse).password, // 示例固定值
+    git_url: "https://gitee.com/dycloud5416/spring-boot-helloWorld.git", // 示例固定值
+    git_branch: "main", // 示例固定值
+    git_commit_id: "", // 示例固定值或动态值
+    stages: taskGrid.value.map((stage, stageIndex) => ({
+      name: stageIndex === 0 ? "build-stage" : stageIndex === 1 ? "docker-stage" : "deploy-stage", // 按顺序命名阶段
+      params: stage.params.map(param => ({
+        name: param.name,
+        defaultValue: param.defaultValue
+      })),
+      task_list: stage.taskList.map((task, taskIndex) => ({
+        name: task.name === "maven" ? "build-project" : task.name,
+        branch: task.branch || `${taskIndex + 1}`,
+        plugin:
+            task.name === "maven"
+                ? "执行脚本"
+                : task.name === "build-and-push"
+                    ? "镜像打包并推送到仓库"
+                    : task.name === "deploy"
+                        ? "部署到Kubernetes"
+                        : "",
+        image:
+            task.name === "deploy"
+                ? "swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3"
+                : task.image || "",
+        script: task.textarea || "",
+        spatial_name: task.spatialName || "",
+        warehouse:
+            task.name === "build-and-push"
+                ? "registry.cn-hangzhou.aliyuncs.com/dyclouds"
+                : task.warehouse || "",
+        mirror_tag: task.mirrorTag || "",
+        dockerfile: task.dockerfile || "",
+        context_path: task.contextPath || "",
+        product_name: task.productName || "",
+        product_path: task.productPath || "",
+        version: task.version || "",
+        resource: task.resource || "",
+        yaml_resource: task.yamlResource || "",
+        goal_resource: task.goalResource || "",
+        open_script: task.openScript || "",
+      })),
+    })),
+  };
+  // 查找匹配的 environmentOption
+  const environment = pipelineInfo.environment;
+  const matchedOption = pipelineInfo.environmentOptions.find(option => option.value === environment);
+// 如果找到匹配的环境，赋值 namespace
+  if (matchedOption) {
+    backendJson.k8s_namespace = matchedOption.namespace;
+  } else {
+    // 如果没有匹配项，可以设置一个默认值
+    backendJson.k8s_namespace = "default";
+  }
+  console.log(backendJson)
+}
 
 const loadAppDetails = async () => {
   console.log("================================");
