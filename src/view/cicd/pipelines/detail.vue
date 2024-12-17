@@ -598,7 +598,13 @@ import {useRoute, useRouter} from "vue-router";
 import { ref, reactive,computed } from "vue";
 import {onMounted} from "vue";
 import {describeApplicationByName, describeApplications, getApplicationsList} from "@/api/cicd/applications";
-import {DescribePipelines} from "@/api/cicd/pipelines";
+import {
+  createPipelinesCache,
+  createPipelinesNotice,
+  DescribePipelines,
+  GetPipelinesCache,
+  GetPipelinesNotice
+} from "@/api/cicd/pipelines";
 import flowFrame from "./flow-frame.vue";
 
 import dayjs from "dayjs";
@@ -978,6 +984,39 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error fetching build environment list:', error);
   }
+
+  try {
+    // 调用 getBuildEnvList 接口
+    const response = await GetPipelinesCache( id);
+    console.log(response)
+    if (response.data.enable === 1) {
+      cacheEnabled.value = true
+    }else {
+      cacheEnabled.value = false
+    }
+    cacheOption.value = response.data.cache_option
+    customCachePath.value = response.data.cache_dir
+    console.log("缓存啊")
+  } catch (error) {
+    console.error('Error fetching build environment list:', error);
+  }
+  try {
+    // 调用 getBuildEnvList 接口
+    const response = await GetPipelinesNotice( id);
+    console.log(response)
+    if (response.data.enable === 1) {
+      notificationEnabled.value = true
+    }else {
+      notificationEnabled.value = false
+    }
+    selectedEvents.value = response.data.notice_event
+    notificationMethod.value = response.data.notice_type
+    webhookUrl.value = response.data.webhook
+    console.log("通知啊")
+  } catch (error) {
+    console.error('Error fetching build environment list:', error);
+  }
+
 })
 const savePipeline = async () => {
   console.log(taskGrid.value)
@@ -1051,9 +1090,10 @@ const savePipeline = async () => {
     // 如果没有匹配项，可以设置一个默认值
     backendJson.k8s_namespace = "default";
   }
+
+
   console.log(backendJson)
 }
-
 const loadAppDetails = async () => {
   console.log("================================");
   try {
@@ -1101,13 +1141,33 @@ const dynamicHelpText = computed(() => {
   return "请选择通知方式并填写Webhook URL";
 });
 // 更新通知配置
-const updateNotification = () => {
-  console.log("通知配置已更新：", {
-    notificationEnabled: notificationEnabled.value,
-    selectedEvents: selectedEvents.value,
-    notificationMethod: notificationMethod.value,
-    webhookUrl: webhookUrl.value,
-  });
+const updateNotification = async () => {
+  console.log("通知配置已更新：", );
+  console.log(notificationEnabled.value)
+  console.log(id)
+  let enable
+  if (notificationEnabled.value == true) {
+      enable = 1
+  } else {
+    enable = 2
+  }
+  try {
+    const res = await createPipelinesNotice({
+      pipeline_id: parseInt(id,10),
+      enable: enable,
+      notice_event: selectedEvents.value,
+      notice_type: notificationMethod.value,
+      webhook: webhookUrl.value,
+    }); // 调用接口
+    if (res.code === 0 && res.data) {
+        console.log(res)
+        ElMessage.success("更新成功")
+    } else {
+      ElMessage.error(res.msg || "创建通知失败");
+    }
+  } catch (error) {
+    ElMessage.error("创建通知失败，请稍后重试");
+  }
 };
 
 // 缓存配置开关状态
@@ -1120,12 +1180,43 @@ const cacheOption = ref("workspace");
 const customCachePath = ref("");
 
 // 保存缓存配置
-const saveCacheConfig = () => {
+const saveCacheConfig = async () => {
   console.log("缓存配置已保存:", {
+    pipeline_id: parseInt(id,10),
     cacheEnabled: cacheEnabled.value,
     cacheOption: cacheOption.value,
     customCachePath: customCachePath.value,
   });
+  let cache_dir
+  if (cacheOption.value == "workspace"){
+    cache_dir = "${WORKSPACE}/cache"
+  }else  {
+    cache_dir = customCachePath.value
+  }
+  let cache_enable
+  if (cacheEnabled.value == true){
+    cache_enable = 1
+  }else  {
+    cache_enable = 2
+  }
+  try {
+    const res = await createPipelinesCache({
+      pipeline_id: parseInt(id,10),
+      enable: cache_enable,
+      cache_option: cacheOption.value,
+      cache_dir: cache_dir,
+    }); // 调用接口
+    console.log(res)
+    if (res.code === 0 && res.data) {
+      console.log(res)
+      ElMessage.success("更新成功")
+    } else {
+      ElMessage.error(res.msg || "创建通知失败");
+    }
+  } catch (error) {
+    ElMessage.error("创建通知失败，请稍后重试");
+  }
+
 };
 
 // 取消缓存配置

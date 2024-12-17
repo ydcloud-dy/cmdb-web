@@ -31,3 +31,35 @@ export const DescribePipelines = (id) => {
         method: 'get',
     })
 }
+export const createPipelinesNotice = (data) => {
+    return service({
+        url: '/cicd/pipelines/notice',
+        method: 'post',
+        data,
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}
+export const GetPipelinesNotice = (id) => {
+    return service({
+        url: `/cicd/pipelines/notice/${id}`,
+        method: 'get',
+    })
+}
+export const GetPipelinesCache = (id) => {
+    return service({
+        url: `/cicd/pipelines/cache/${id}`,
+        method: 'get',
+    })
+}
+export const createPipelinesCache = (data) => {
+    return service({
+        url: '/cicd/pipelines/cache',
+        method: 'post',
+        data,
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}
