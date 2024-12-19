@@ -63,3 +63,10 @@ export const createPipelinesCache = (data) => {
         }
     })
 }
+export const updatePipelines = (data) => {
+    return service({
+        url: '/cicd/pipelines',
+        method: 'put',
+        data
+    })
+}

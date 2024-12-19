@@ -599,11 +599,12 @@ import { ref, reactive,computed } from "vue";
 import {onMounted} from "vue";
 import {describeApplicationByName, describeApplications, getApplicationsList} from "@/api/cicd/applications";
 import {
+  createPipelines,
   createPipelinesCache,
   createPipelinesNotice,
   DescribePipelines,
   GetPipelinesCache,
-  GetPipelinesNotice
+  GetPipelinesNotice, updatePipelines
 } from "@/api/cicd/pipelines";
 import flowFrame from "./flow-frame.vue";
 
@@ -1024,6 +1025,7 @@ const savePipeline = async () => {
   console.log(OldData.value)
   console.log("--------------------------------'")
   const backendJson = {
+    ID: parseInt(id),
     name: OldData.value.name, // 示例固定值，或者从 pipelineInfo 动态设置
     app_name: repositoryInfo.appCode, // 示例固定值，或者从 pipelineInfo 动态设置
     env_name: OldData.value.env_name, // 从 pipelineInfo 中获取环境
@@ -1041,13 +1043,13 @@ const savePipeline = async () => {
     git_branch: "main", // 示例固定值
     git_commit_id: "", // 示例固定值或动态值
     stages: taskGrid.value.map((stage, stageIndex) => ({
-      name: stageIndex === 0 ? "build-stage" : stageIndex === 1 ? "docker-stage" : "deploy-stage", // 按顺序命名阶段
+      name: stage.name, // 按顺序命名阶段
       params: stage.params.map(param => ({
         name: param.name,
         defaultValue: param.defaultValue
       })),
       task_list: stage.taskList.map((task, taskIndex) => ({
-        name: task.name === "maven" ? "build-project" : task.name,
+        name: task.name,
         branch: task.branch || `${taskIndex + 1}`,
         plugin:
             task.name === "maven"
@@ -1091,7 +1093,18 @@ const savePipeline = async () => {
     backendJson.k8s_namespace = "default";
   }
 
-
+  let res;
+  res = await updatePipelines(backendJson);
+  // 处理 API 响应
+  if (res && res.code === 0) {
+    console.log(res)
+    ElMessage.success("流水线已保存");
+  } else {
+    ElMessage({
+      type: 'error',
+      message: res ? res.msg : '操作失败'
+    });
+  }
   console.log(backendJson)
 }
 const loadAppDetails = async () => {
