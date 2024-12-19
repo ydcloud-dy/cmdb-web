@@ -52,6 +52,39 @@
         <FormBlock :form="form" :regions="regions" @close="closeDialog" :type="type" @enter="enterDialog" />
       </el-dialog>
     </div>
+    <!-- 弹出框 -->
+    <el-dialog
+        v-model="dialogVisible"
+        width="50%"
+        title="运行流水线"
+    >
+      <div>
+        <!-- 仓库地址 -->
+        <el-form :model="form">
+          <el-form-item label="仓库地址：" label-width="100px">
+            <el-input v-model="form.repoUrl" readonly disabled></el-input>
+          </el-form-item>
+
+          <!-- 分支/Tag选择 -->
+          <el-form-item label="分支：" label-width="100px">
+            <el-select v-model="form.branchOrTag" placeholder="请选择">
+              <el-option
+                  v-for="branch in branches"
+                  :key="branch"
+                  :label="branch"
+                  :value="branch"
+              ></el-option>
+            </el-select>
+            <el-button type="text" @click="refreshBranches">刷新</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="runPipeline">运行</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -72,7 +105,6 @@ import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
 import {getPipelinesList} from "@/api/cicd/pipelines";
 
-const form = ref({})
 const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
@@ -82,6 +114,28 @@ const searchInfo = ref({})
 const deleteVisible = ref(false)
 const clusters = ref([])
 const regions = ref([])
+const dialogVisible = ref(false);
+
+// 表单数据
+const form = ref({
+  repoUrl: "https://github.com/ydcloud-dy/spring-boot-helloWorld.git", // 示例仓库地址
+  branchOrTag: "main", // 默认分支
+});
+// 分支数据
+const branches = ref(["develop", "main", "test", "test_1", "test_2", "test_3"]);
+// 刷新分支列表
+const refreshBranches = () => {
+  console.log("刷新分支/Tag列表...");
+  // 模拟分支刷新数据
+  branches.value = ["develop", "main", "feature/new-feature", "release/v1.0.0"];
+};
+
+// 运行流水线
+const runPipeline = () => {
+  console.log("运行流水线，选择的表单数据为：", form.value);
+  dialogVisible.value = false; // 关闭弹窗
+};
+
 // 搜索
 const onReset = () => {
   searchInfo.value = {}
@@ -128,30 +182,14 @@ getTableData()
 // 更新数据模态框
 const dialogFormVisible = ref(false)
 const type = ref('')
+
+
+
 const handleRun = async(row) => {
-  const res = await describeApplications(row.ID)
-  type.value = 'update'
-  title.value = '更新'
-  if (res.code === 0) {
-    const data = res.data
-
-
-    console.log(data,"-----")
-    // 将查询结果中的数据赋值到表单
-    form.value = {
-      ID: data.ID,
-      name: data.name,
-      full_name: data.full_name,
-      language: data.language,
-      build_path: data.build_path,
-      dockerfile: data.dockerfile,
-      repo_id: data.repo_id,
-      path: data.path,
-      compile_env_id: data.compile_env_id
-    };
-
-    dialogFormVisible.value = true
-  }
+  dialogVisible.value = true; // 打开弹窗
+  console.log("run")
+  console.log(row)
+  form.value.repoUrl = row.git_url
 }
 
 

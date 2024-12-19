@@ -161,9 +161,14 @@
             <el-select
                 v-model="repositoryInfo.gitType"
                 placeholder="请选择连接"
+                @change="updateRepositoryInfo"
             >
-              <el-option label="gitlab" value="gitlab"></el-option>
-              <el-option label="gitte" value="gitte"></el-option>
+              <el-option
+                  v-for="item in serviceList"
+                  :key="item.ID"
+                  :label="item.name"
+                  :value="item.name"
+              ></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="开启代码源触发" required>
@@ -518,8 +523,10 @@ import flowFrame from "./flow-frame.vue";
 import {createApplications, describeApplications} from "@/api/cicd/applications";
 import { getBuildEnvList} from "@/api/configurationCenter/buildEnv";
 import {createPipelines} from "@/api/cicd/pipelines";
+import {getSourceCodeList} from "@/api/configurationCenter/codeSource";
 
 const taskGrid = ref([]);
+const registryList = ref([]);
 
 
 const route = useRoute();
@@ -546,22 +553,27 @@ const repositoryInfo = reactive({
   url: "",
   appCode: "",
   defaultBranch: "",
+  gitType: "",
   voucherType: "",
   branch: "",
   codeSourceStatus: 0,
+  repoId: null, // 新增字段，用于存储选中的服务连接 ID
+
 });
 
 const tasks = ref([]); // 存储任务列表
 const newTask = reactive({ name: "", executor: "", params: [] }); // 临时任务对象
 const addTaskDialogVisible = ref(false); // 控制添加阶段弹窗的显示
 const repositoryDialogVisible = ref(false); // 控制关联代码库弹窗的显示
-const registryList = ref([]); // 用于存储返回的注册表列表
+const serviceList = ref([]); // 用于存储返回的注册表列表
 const buildEnvList = ref([]);
 
 // 在页面加载时设置 repositoryInfo.url 为 gitUrl
 onMounted(async () => {
   // repositoryInfo.url = gitUrl || ''; // 如果 gitUrl 存在则设置为默认值
   await loadAppDetails(); // 确保调用接口
+  fetchserviceList()
+
   try {
     const response = await getRegistryList({ page: 1, pageSize: 1000 });
     if (response && response.data && response.data.list) {
@@ -590,7 +602,24 @@ onMounted(async () => {
   }
 });
 const currentTaskIndex = ref(-1);
+// 根据 gitType 更新 repositoryInfo.repoId
 
+// 获取数据的函数
+const fetchserviceList = async () => {
+  try {
+    // 调用接口
+    const response = await getSourceCodeList({ page: 1, pageSize: 10000 });
+
+    // 检查接口返回是否成功
+    if (response.code === 0 && response.data.list) {
+      serviceList.value = response.data.list;
+    } else {
+      console.error("获取数据失败:", response.msg);
+    }
+  } catch (error) {
+    console.error("接口请求错误:", error);
+  }
+};
 // 打开关联代码库弹窗
 const linkRepository = () => {
   repositoryDialogVisible.value = true;
@@ -659,17 +688,48 @@ const createTask = (taskGroup, task, x, y) => {
   addParallelTaskDialogVisible.value = true;
 };
 
-// 确认关联代码库
+// 根据 gitType 更新 repositoryInfo.repoId
+const updateRepositoryInfo = () => {
+  if (!serviceList.value || serviceList.value.length === 0) {
+    console.error("服务连接列表为空");
+    return;
+  }
+
+  if (!repositoryInfo.gitType) {
+    console.error("未选择服务连接");
+    return;
+  }
+
+  const selectedService = serviceList.value.find(
+      (item) => item.name === repositoryInfo.gitType
+  );
+
+  if (selectedService) {
+    repositoryInfo.repoId = selectedService.ID; // 更新 repoId
+
+    console.log("匹配的服务信息：", selectedService);
+    console.log("更新后的 repositoryInfo：", repositoryInfo);
+  } else {
+    console.error("未找到与 repositoryInfo.gitType 匹配的服务连接");
+  }
+};
+// 确认选择并打印完整信息
+// 确认选择
 const confirmRepository = () => {
+  updateRepositoryInfo(); // 更新 repoId
+
   if (repositoryInfo.url && repositoryInfo.defaultBranch) {
-    // 将弹窗填写的 Git 地址和分支更新到主界面显示
-    repositoryInfo.branch = repositoryInfo.defaultBranch; // 更新主界面显示的分支
-    repositoryDialogVisible.value = false; // 关闭弹窗
+    console.log("选中的完整仓库信息：", repositoryInfo);
+    repositoryInfo.defaultBranch = "main"; // 设置默认分支为 "main"（可以根据需求调整）
+    repositoryInfo.branch = "main"
     ElMessage.success("关联代码库成功");
+    repositoryDialogVisible.value = false;
+
   } else {
     ElMessage.error("请填写完整信息");
   }
 };
+
 
 const numberOfRows = computed(() => {
   return taskGrid.value.length;
@@ -930,6 +990,7 @@ const savePipeline = async () => {
     registry_pass: getRegistryCredentials(popupTask.value.warehouse).password, // 示例固定值
     git_url: "https://gitee.com/dycloud5416/spring-boot-helloWorld.git", // 示例固定值
     git_branch: "main", // 示例固定值
+    repo_id: repositoryInfo.repoId,
     git_commit_id: "", // 示例固定值或动态值
     stages: taskGrid.value.map((stage, stageIndex) => ({
       name: stageIndex === 0 ? "build-stage" : stageIndex === 1 ? "docker-stage" : "deploy-stage", // 按顺序命名阶段
