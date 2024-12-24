@@ -82,24 +82,24 @@ const getMetrics = async() => {
     start: selectTimeStart.value,
     end: selectTimeEnd.value,
   }
-  // const resp = await GetMetrics({
-  //   MemoryRequests: opts,
-  //   MemoryUsage: opts,
-  //   MemoryCapacity: opts,
-  //   CpuUsage: opts,
-  //   CpuRequests: opts,
-  //   CpuCapacity: opts,
-  //   FsSize: opts,
-  //   FsUsage: opts,
-  //   PodUsage: opts,
-  //   PodCapacity: opts,
-  // })
-  // if (resp.code === 0) {
-  //   MetricData.value = mapValues(
-  //       resp.data.metrics,
-  //       (metric) => normalizeMetrics(metric).data.result[0].values
-  //   )
-  // }
+  const resp = await GetMetrics({
+    MemoryRequests: opts,
+    MemoryUsage: opts,
+    MemoryCapacity: opts,
+    CpuUsage: opts,
+    CpuRequests: opts,
+    CpuCapacity: opts,
+    FsSize: opts,
+    FsUsage: opts,
+    PodUsage: opts,
+    PodCapacity: opts,
+  })
+  if (resp.code === 0) {
+    MetricData.value = mapValues(
+        resp.data.metrics,
+        (metric) => normalizeMetrics(metric).data.result[0].values
+    )
+  }
   MetricStatus.value = true
 }
 GetDialogData()

@@ -27,10 +27,10 @@ export const PodsMetricsList = (params) => {
     })
 }
 
-export const GetMetrics = (params) => {
+export const GetMetrics = (data) => {
     return service({
-        url: '/kubernetes/pods/metrics',
-        method: 'get',
-        params
+        url: '/metrics/get',
+        method: 'post',
+        data
     })
 }

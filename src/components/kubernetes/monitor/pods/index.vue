@@ -99,20 +99,20 @@ const getMetrics = async() => {
     start: selectTimeStart.value,
     end: selectTimeEnd.value,
   }
-  // const resp = await GetMetrics({
-  //   CpuUsage: opts,
-  //   memoryUsage: opts,
-  //   PodTcpEstablishedConn: opts,
-  // })
-  // if (resp.code === 0) {
-  //   MetricData.value = mapValues(
-  //       resp.data.metrics,
-  //       (metric) => normalizeMetrics(metric).data.result[0].values
-  //   )
-  //
-  //   MetricDataFormat()
-  //   MetricStatus.value = true
-  // }
+  const resp = await GetMetrics({
+    CpuUsage: opts,
+    memoryUsage: opts,
+    PodTcpEstablishedConn: opts,
+  })
+  if (resp.code === 0) {
+    MetricData.value = mapValues(
+        resp.data.metrics,
+        (metric) => normalizeMetrics(metric).data.result[0].values
+    )
+
+    MetricDataFormat()
+    MetricStatus.value = true
+  }
 }
 GetDialogData()
 
