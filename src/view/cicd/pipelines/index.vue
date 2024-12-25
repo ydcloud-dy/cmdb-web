@@ -103,7 +103,7 @@ import TableBlock from './table.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
-import {getPipelinesList} from "@/api/cicd/pipelines";
+import {getPipelinesList, RunPipelines, updatePipelines} from "@/api/cicd/pipelines";
 
 const page = ref(1)
 const total = ref(0)
@@ -131,9 +131,32 @@ const refreshBranches = () => {
 };
 
 // 运行流水线
-const runPipeline = () => {
+const runPipeline = async () => {
   console.log("运行流水线，选择的表单数据为：", form.value);
+  console.log(selectTableData.value)
   dialogVisible.value = false; // 关闭弹窗
+  // 构造 backendJson 数据
+  const backendJson = {
+    name: selectTableData.value.name || "", // 假设 form.value 中有 pipelineName
+    k8s_namespace: selectTableData.value.k8s_namespace || "default", // 假设 form.value 中有 k8sNamespace
+    app_name: selectTableData.value.app_name , // 假设 form.value 中有 appName
+    env_name: selectTableData.value.env_name , // 假设 form.value 中有 envName
+    k8s_cluster_name: selectTableData.value.k8s_cluster_name, // 假设 form.value 中有 k8sClusterName
+    git_branch: form.value.branchOrTag // 假设 form.value 中有 gitBranch
+  };
+  let res;
+  res = await RunPipelines(backendJson);
+  // 处理 API 响应
+  if (res && res.code === 0) {
+    console.log(res)
+    ElMessage.success("流水线已运行");
+  } else {
+    ElMessage({
+      type: 'error',
+      message: res ? res.msg : '操作失败'
+    });
+  }
+
 };
 
 // 搜索
@@ -184,11 +207,12 @@ const dialogFormVisible = ref(false)
 const type = ref('')
 
 
-
+const selectTableData = ref()
 const handleRun = async(row) => {
   dialogVisible.value = true; // 打开弹窗
   console.log("run")
   console.log(row)
+  selectTableData.value = row
   form.value.repoUrl = row.git_url
 }
 

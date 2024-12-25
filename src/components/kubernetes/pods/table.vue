@@ -65,7 +65,7 @@
           prop="status"
           label="CPU/内存/TCP"
           type="scope"
-          width="400"
+          width="200"
       >
         <template #default="scope">
           <div v-if="scope.row">
@@ -91,7 +91,8 @@
           <span>{{ scope.row.metadata.namespace }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Pod IP" prop="Pod_IP" type="scope">
+      <el-table-column label="Pod IP" prop="Pod_IP" type="scope"         width="100"
+      >
         <template #default="scope">
           <span>{{ scope.row.status.podIP }}</span>
         </template>
@@ -106,7 +107,7 @@
           <span>{{ AgeFormat(scope.row.metadata.creationTimestamp) }}</span>
         </template>
       </el-table-column>
-      <el-table-column fixed="right" label="操作" width="200" type="scope">
+      <el-table-column fixed="right" label="操作" width="100" type="scope">
         <template #default="scope">
           <el-button size="small" type="primary" link icon="edit" @click="handleEdit(scope.row)">编辑</el-button>
           <div>

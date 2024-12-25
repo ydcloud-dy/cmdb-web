@@ -70,3 +70,14 @@ export const updatePipelines = (data) => {
         data
     })
 }
+
+export const RunPipelines = (data) => {
+    return service({
+        url: '/cicd/pipelinesRun',
+        method: 'post',
+        data,
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}

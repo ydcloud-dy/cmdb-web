@@ -99,6 +99,7 @@
         label="命名空间"
         prop="namespace"
         type="scope"
+
       >
         <template #default="scope">
           <span>{{ scope.row.metadata.namespace }}</span>

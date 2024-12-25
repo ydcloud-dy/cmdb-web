@@ -109,6 +109,9 @@ export const createContainerExec = (host,data) => {
     url: `/docker/${host}/container/exec`,
     method: 'post',
     data: data,
+    loadingOption: {
+      target: '.right-container'
+    }
   })
 }
 
@@ -122,6 +125,9 @@ export const resizeContainerExec = (host,data) => {
     url: `/docker/${host}/container/exec/resize`,
     method: 'post',
     data: data,
+    loadingOption: {
+      target: '.right-container'
+    }
   })
 }
 

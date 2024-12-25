@@ -355,6 +355,8 @@
                   <el-option label="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3" value="1"></el-option>
                   <el-option label="v1.23.6" value="2"></el-option>
                 </el-select>
+
+
               </el-form-item>
 
               <el-form-item label="资源类型：" required>

@@ -363,11 +363,17 @@
                 >:
               </template>
               <el-select
-                  v-model="popupTask.version"
+                  v-model="popupTask.image"
                   placeholder="请选择kubectl版本"
               >
-                <el-option label="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3" value="1"></el-option>
-                <el-option label="v1.23.6" value="2"></el-option>
+<!--                <el-option label="swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3" value="1"></el-option>-->
+<!--                <el-option label="v1.23.6" value="2"></el-option>-->
+                <el-option
+                    v-for="env in buildEnvList"
+                    :key="env.ID"
+                    :label="env.image"
+                    :value="env.image"
+                ></el-option>
               </el-select>
             </el-form-item>
 
@@ -1010,9 +1016,7 @@ const savePipeline = async () => {
                         ? "部署到Kubernetes"
                         : "",
         image:
-            task.name === "deploy"
-                ? "swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3"
-                : task.image || "",
+            task.image || "",
         script: task.textarea || "",
         spatial_name: task.spatialName || "",
         warehouse:
