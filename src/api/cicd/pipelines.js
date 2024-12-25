@@ -81,3 +81,19 @@ export const RunPipelines = (data) => {
         }
     })
 }
+// 获取分支列表
+export const getBranchList = (id) => {
+    return service({
+        url: `/cicd/pipelines/${id}/branches`,
+        method: 'get',
+    })
+}
+export const SyncBranchs = (id) => {
+    return service({
+        url: `/cicd/pipelines/syncBranch/${id}`,
+        method: 'post',
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}

@@ -103,7 +103,8 @@ import TableBlock from './table.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
-import {getPipelinesList, RunPipelines, updatePipelines} from "@/api/cicd/pipelines";
+import {getPipelinesList, RunPipelines, updatePipelines,getBranchList,SyncBranchs} from "@/api/cicd/pipelines";
+import {onMounted} from "vue";
 
 const page = ref(1)
 const total = ref(0)
@@ -124,12 +125,43 @@ const form = ref({
 // 分支数据
 const branches = ref(["develop", "main", "test", "test_1", "test_2", "test_3"]);
 // 刷新分支列表
-const refreshBranches = () => {
+const refreshBranches = async () => {
   console.log("刷新分支/Tag列表...");
-  // 模拟分支刷新数据
-  branches.value = ["develop", "main", "feature/new-feature", "release/v1.0.0"];
-};
+  try {
+    // 调用 SyncBranchs 接口，传入当前的 ID
+    const response = await SyncBranchs(selectTableData.value.ID);
 
+    if (response && response.code === 0) {
+      // 如果接口调用成功，刷新分支列表
+       fetchBranches();
+      ElMessage.success("分支同步成功")
+    } else {
+      ElMessage.success("分支刷新失败:", response.msg)
+    }
+  } catch (error) {
+    console.error("调用接口失败:", error);
+  }
+};
+// 获取分支列表的函数
+const fetchBranches = async () => {
+  console.log(selectTableData.value)
+  try {
+    const response = await getBranchList(selectTableData.value.ID); // 调用 API 获取分支列表
+    console.log('分支列表:', branches.value);
+    // 提取分支名称并赋值给 branches
+    if (response && response.data && response.data.list) {
+      branches.value = response.data.list.map(item => item.branch_name); // 获取分支名数组
+    } else {
+      branches.value = []; // 如果没有分支数据，清空 branches
+    }
+  } catch (error) {
+    console.error('获取分支列表失败:', error);
+  }
+};
+// onMounted( () => {
+//   fetchBranches()
+//
+// })
 // 运行流水线
 const runPipeline = async () => {
   console.log("运行流水线，选择的表单数据为：", form.value);
@@ -213,6 +245,7 @@ const handleRun = async(row) => {
   console.log("run")
   console.log(row)
   selectTableData.value = row
+  fetchBranches()
   form.value.repoUrl = row.git_url
 }
 

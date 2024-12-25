@@ -61,10 +61,10 @@
       <el-table-column prop="hostIP" label="宿主机 IP" />
       <el-table-column prop="containerIP" label="容器 IP" />
       <el-table-column prop="rebootCount" label="重启次数" />
-      <el-table-column prop="createdAt" label="创建时间" :formatter="formatDate" />
+      <el-table-column prop="createdAt" label="创建时间"  />
       <el-table-column prop="version" label="版本" />
       <el-table-column prop="status" label="状态" />
-      <el-table-column prop="resources" label="CPU 用量/内存用量" />
+<!--      <el-table-column prop="resources" label="CPU 用量/内存用量" />-->
       <el-table-column label="操作">
         <template #default="scope">
           <el-button type="text" size="small" @click="handleDeployAction(scope.row)">操作</el-button>
@@ -276,7 +276,13 @@ const fetchPodList = async (clusterId) => {
     cluster_id: clusterId, // 动态传入 clusterId
     app_code: `app=${appDetails.value.appCode}-${selectedEnvCode.value}`, // 从应用详情获取 appCode
   };
-
+  const formatDateToLocal = (utcString) => {
+    if (!utcString) return 'Invalid Date'; // 检查是否为空
+    const date = new Date(utcString); // 转换为 Date 对象
+    if (isNaN(date.getTime())) return 'Invalid Date'; // 检查日期是否有效
+    // 转换为本地时间字符串
+    return date.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  };
   try {
     const res = await getAppPodList(requestData);
     if (res.code === 0 && res.data && res.data.items) {
@@ -285,7 +291,9 @@ const fetchPodList = async (clusterId) => {
         hostIP: item.status.hostIP,
         containerIP: item.status.podIP,
         rebootCount: item.status.containerStatuses[0]?.restartCount || 0,
-        createdAt: item.metadata.creationTimestamp ? formatDate(item.metadata.creationTimestamp) : 'Invalid Date',
+        createdAt: item.metadata.creationTimestamp
+            ? formatDateToLocal(item.metadata.creationTimestamp)
+            : 'Invalid Date', // 转换为本地时间
         version: item.status.containerStatuses[0]?.image.split(':')[1] || 'Unknown',
         status: item.status.phase,
         resources: `${item.spec.containers[0]?.resources.requests?.cpu ?? '-'} CPU / ${item.spec.containers[0]?.resources.requests?.memory ?? '-'} RAM`,
@@ -304,7 +312,7 @@ const selectedEnvCode = ref("");
 const handleEnvChange = async (envCode) => {
   console.log('Environment changed to:', envCode);
   selectedEnvCode.value = envCode;
-
+  // selectNamespace.value =
   // 检查 appDetails.value.envs 是否存在并包含数据
   if (!appDetails.value.envs || appDetails.value.envs.length === 0) {
     console.error('appDetails.envs 数据为空或未初始化');
@@ -317,8 +325,9 @@ const handleEnvChange = async (envCode) => {
     console.error('未找到对应环境的配置');
     return;
   }
+ selectNamespace.value = currentEnv.namespace
   console.log(appDetails.value.envs)
-  console.log(currentEnv.clusterId)
+  console.log(currentEnv)
 
   console.log("当前环境的集群id为：",currentEnv.clusterId)
   // 使用找到的 clusterId 调用 fetchPodList
