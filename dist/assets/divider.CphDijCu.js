@@ -1,4 +1,0 @@
-/*! 
- Build based on  
- Time : 1735190558000 */
-import{D as e,ao as t,y as s,z as a,H as i,o as r,c as o,n as l,B as n,J as d,f as c,K as v,C as f,L as u}from"./index.ABWJOL2Q.js";const p=e({direction:{type:String,values:["horizontal","vertical"],default:"horizontal"},contentPosition:{type:String,values:["left","center","right"],default:"center"},borderStyle:{type:t(String),default:"solid"}}),y=s({name:"ElDivider"});const S=u(f(s({...y,props:p,setup(e){const t=e,s=a("divider"),f=i((()=>s.cssVar({"border-style":t.borderStyle})));return(e,t)=>(r(),o("div",{class:l([n(s).b(),n(s).m(e.direction)]),style:v(n(f)),role:"separator"},[e.$slots.default&&"vertical"!==e.direction?(r(),o("div",{key:0,class:l([n(s).e("text"),n(s).is(e.contentPosition)])},[d(e.$slots,"default")],2)):c("v-if",!0)],6))}}),[["__file","divider.vue"]]));export{S as E};

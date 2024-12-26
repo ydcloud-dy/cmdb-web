@@ -1,4 +1,0 @@
-/*! 
- Build based on  
- Time : 1735190558000 */
-import{d1 as e,d2 as t,H as s,o as n,h as a,w as o,g as r,t as i,ax as m,f as u,K as d,Q as l}from"./index.ABWJOL2Q.js";/* empty css                  */import{E as f}from"./index.CwHRikT6.js";import"./index.gYVODlrW.js";import"./index.D4uEcQv3.js";import"./index.BRjlB3m5.js";import"./index.6ock-Gvr.js";const p=Object.assign({name:"MenuItem"},{__name:"menuItem",props:{routerInfo:{default:function(){return null},type:Object}},setup(p){const x=e(),{config:c}=t(x),j=s((()=>c.value.layout_side_item_height+"px"));return(e,t)=>{const s=l,x=f;return n(),a(x,{index:p.routerInfo.name,class:"dark:text-slate-300 overflow-x-hidden",style:d({height:j.value})},{title:o((()=>[r(i(p.routerInfo.meta.title),1)])),default:o((()=>[p.routerInfo.meta.icon?(n(),a(s,{key:0},{default:o((()=>[(n(),a(m(p.routerInfo.meta.icon)))])),_:1})):u("",!0)])),_:1},8,["index","style"])}}});export{p as default};

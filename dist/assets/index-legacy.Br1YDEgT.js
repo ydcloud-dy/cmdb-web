@@ -1,4 +1,0 @@
-/*! 
- Build based on  
- Time : 1735190558000 */
-System.register(["./index-legacy.Cf1_fyJw.js","./button-legacy.CH0FoAJ-.js"],(function(e,t){"use strict";var n,s,r,u,l,c,a,i,f;return{setters:[function(e){n=e.l,s=e.c,r=e.b,u=e.e,l=e.w,c=e.u,a=e.E,i=e.o,f=e.g},null],execute:function(){var t={class:"w-full h-screen bg-gray-50 flex items-center justify-center"},o={class:"flex flex-col items-center text-2xl gap-4"};e("default",Object.assign({name:"Error"},{__name:"index",setup:function(e){var g=n(),x=c(),d=function(){x.push({name:g.userInfo.authority.defaultRouter})};return function(e,n){var c=a;return i(),s("div",null,[r("div",t,[r("div",o,[n[1]||(n[1]=r("img",{class:"w-1/3",src:"/assets/404.Bk63Q-R4.png"},null,-1)),n[2]||(n[2]=r("p",{class:"text-lg"},"页面被神秘力量吸走了",-1)),n[3]||(n[3]=r("p",{class:"text-lg"},"常见问题为当前此角色无当前路由，如果确定要使用本路由，请到角色管理进行分配",-1)),u(c,{onClick:d},{default:l((function(){return n[0]||(n[0]=[f("返回首页")])})),_:1})])])])}}}))}}}));
