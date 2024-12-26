@@ -1,0 +1,4 @@
+/*! 
+ Build based on  
+ Time : 1735190558000 */
+System.register(["./index-legacy.Cf1_fyJw.js"],(function(t,n){"use strict";var e;return{setters:[function(t){e=t.s}],execute:function(){t("c",(function(t){return e({url:"/configCenter/buildEnv",method:"post",data:t,loadingOption:{target:".right-container"}})})),t("a",(function(t){return e({url:"/configCenter/buildEnv/".concat(t),method:"delete",loadingOption:{target:".right-container"}})})),t("u",(function(t){return e({url:"/configCenter/buildEnv",method:"put",data:t})})),t("d",(function(t){return e({url:"/configCenter/buildEnv/".concat(t),method:"get"})})),t("g",(function(t){return e({url:"/configCenter/buildEnv",method:"get",params:t})})),t("b",(function(t){return e({url:"/configCenter/buildEnv",method:"delete",data:t,loadingOption:{target:".right-container"}})}))}}}));

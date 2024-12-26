@@ -1,0 +1,4 @@
+/*! 
+ Build based on  
+ Time : 1735190558000 */
+System.register(["./index-legacy.Cf1_fyJw.js"],(function(t,e){"use strict";var s,a,i,n,o,r,u;return{setters:[function(t){s=t.o,a=t.c,i=t.b,n=t.t,o=t.f,r=t.J,u=t.n}],execute:function(){var e={key:0,class:"flex justify-between items-center"},d={class:"text-base font-bold"},l={key:0,class:"text-sm text-active cursor-pointer"},c={class:"mt-2"};t("default",{__name:"card",props:{title:{type:String,default:""},showAction:{type:Boolean,default:!1},customClass:{type:String,default:""},withoutPadding:{type:Boolean,default:!1}},setup:function(t){return function(f,y){return s(),a("div",{class:u(["bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-400 rounded shadow",[t.customClass||"",t.withoutPadding?"p-0":"p-4"]])},[t.title?(s(),a("div",e,[i("div",d,n(t.title),1),t.showAction?(s(),a("div",l," 查看更多 ")):o("",!0)])):o("",!0),i("div",c,[r(f.$slots,"default")])],2)}}})}}}));

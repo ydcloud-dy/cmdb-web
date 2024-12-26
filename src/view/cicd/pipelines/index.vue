@@ -103,7 +103,14 @@ import TableBlock from './table.vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { syncRegion } from '@/api/cloudCmdb/cloud_region'
-import {getPipelinesList, RunPipelines, updatePipelines,getBranchList,SyncBranchs} from "@/api/cicd/pipelines";
+import {
+  getPipelinesList,
+  RunPipelines,
+  updatePipelines,
+  getBranchList,
+  SyncBranchs,
+  deletePipelines
+} from "@/api/cicd/pipelines";
 import {onMounted} from "vue";
 
 const page = ref(1)
@@ -271,7 +278,7 @@ const closeDialog = () => {
 // 删除数据
 const handleDelete = async(row) => {
   row.visible = false
-  const res = await deleteApplications(  row.ID )
+  const res = await deletePipelines(  row.ID )
   if (res.code === 0) {
     ElMessage({
       type: 'success',

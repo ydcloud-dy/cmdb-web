@@ -12,8 +12,8 @@
 </template>
 
 <script setup>
-import banner from "@/assets/banner.jpg"
-import banner2 from "@/assets/banner2.jpg"
+// import banner from "@/assets/banner.jpg"
+// import banner2 from "@/assets/banner2.jpg"
 
 const openLink = (link) => {
     window.open(link, '_blank')

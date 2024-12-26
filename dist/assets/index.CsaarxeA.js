@@ -1,0 +1,4 @@
+/*! 
+ Build based on  
+ Time : 1735190558000 */
+import{l as s,c as e,b as t,e as a,w as l,u as n,E as r,o as c,g as u}from"./index.ABWJOL2Q.js";/* empty css               */const o={class:"w-full h-screen bg-gray-50 flex items-center justify-center"},i={class:"flex flex-col items-center text-2xl gap-4"},f=Object.assign({name:"Error"},{__name:"index",setup(f){const x=s(),g=n(),m=()=>{g.push({name:x.userInfo.authority.defaultRouter})};return(s,n)=>{const f=r;return c(),e("div",null,[t("div",o,[t("div",i,[n[1]||(n[1]=t("img",{class:"w-1/3",src:"/assets/404.Bk63Q-R4.png"},null,-1)),n[2]||(n[2]=t("p",{class:"text-lg"},"页面被神秘力量吸走了",-1)),n[3]||(n[3]=t("p",{class:"text-lg"},"常见问题为当前此角色无当前路由，如果确定要使用本路由，请到角色管理进行分配",-1)),a(f,{onClick:m},{default:l((()=>n[0]||(n[0]=[u("返回首页")]))),_:1})])])])}}});export{f as default};

@@ -999,13 +999,13 @@ const savePipeline = async () => {
     repo_id: repositoryInfo.repoId,
     git_commit_id: "", // 示例固定值或动态值
     stages: taskGrid.value.map((stage, stageIndex) => ({
-      name: stageIndex === 0 ? "build-stage" : stageIndex === 1 ? "docker-stage" : "deploy-stage", // 按顺序命名阶段
+      name: stage.name, // 按顺序命名阶段
       params: stage.params.map(param => ({
         name: param.name,
         defaultValue: param.defaultValue
       })),
       task_list: stage.taskList.map((task, taskIndex) => ({
-        name: task.name === "maven" ? "build-project" : task.name,
+        name: task.name,
         branch: task.branch || `${taskIndex + 1}`,
         plugin:
             task.name === "maven"
@@ -1020,9 +1020,7 @@ const savePipeline = async () => {
         script: task.textarea || "",
         spatial_name: task.spatialName || "",
         warehouse:
-            task.name === "build-and-push"
-                ? "registry.cn-hangzhou.aliyuncs.com/dyclouds"
-                : task.warehouse || "",
+            task.warehouse || "",
         mirror_tag: task.mirrorTag || "",
         dockerfile: task.dockerfile || "",
         context_path: task.contextPath || "",

@@ -42,16 +42,16 @@
           <span>执行记录</span>
         </div>
         <div class="execution-log">
-          <el-list>
-            <el-list-item v-for="(log, index) in executionLogs" :key="index">
-              <div class="log-item">
-                <!-- 显示执行状态、命令和时间 -->
-                <el-tag :type="log.status === 'success' ? 'success' : 'danger'" size="small">{{ log.status }}</el-tag>
-                <span class="log-content">{{ log.command }}</span>
-                <span class="log-timestamp">{{ log.timestamp }}</span>
-              </div>
-            </el-list-item>
-          </el-list>
+<!--          <el-list>-->
+<!--            <el-list-item v-for="(log, index) in executionLogs" :key="index">-->
+<!--              <div class="log-item">-->
+<!--                &lt;!&ndash; 显示执行状态、命令和时间 &ndash;&gt;-->
+<!--                <el-tag :type="log.status === 'success' ? 'success' : 'danger'" size="small">{{ log.status }}</el-tag>-->
+<!--                <span class="log-content">{{ log.command }}</span>-->
+<!--                <span class="log-timestamp">{{ log.timestamp }}</span>-->
+<!--              </div>-->
+<!--            </el-list-item>-->
+<!--          </el-list>-->
         </div>
       </el-card>
     </el-col>
@@ -117,6 +117,7 @@ import { getCmdbHostsList } from '@/api/cmdb/cmdbHosts';
 import { getCmdbProjectsList } from '@/api/cmdb/cmdbProjects';
 import { executeCommands, executeRecords } from "@/api/cmdb/batchOperations"; // 导入新的API
 import { useRouter } from "vue-router";
+// import "element-plus/es/components/list/style/index"
 import { ElMessage } from "element-plus";
 const router = useRouter()
 

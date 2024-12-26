@@ -97,3 +97,12 @@ export const SyncBranchs = (id) => {
         }
     })
 }
+export const deletePipelines = (id) => {
+    return service({
+        url: `/cicd/pipelines/${id}`,
+        method: 'delete',
+        loadingOption: {
+            target: '.right-container'
+        }
+    })
+}
