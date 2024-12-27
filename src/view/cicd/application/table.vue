@@ -116,6 +116,8 @@
             <el-option label="Java" value="java" />
             <el-option label="Golang" value="golang" />
             <el-option label="Python" value="python" />
+            <el-option label="Node" value="node" />
+
           </el-select>
         </el-form-item>
 <!--        <el-form-item label="是否核心应用" prop="isCore">-->

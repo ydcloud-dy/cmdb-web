@@ -544,6 +544,7 @@ const isEditTask = ref(false); // 是否在编辑已有阶段
 
 // 从查询参数中获取 id、name 和 gitUrl
 const appId = route.query.appId;
+const projectType = route.query.projectType
 const name = route.query.name;
 const gitUrl = route.query.gitUrl;
 
@@ -978,6 +979,7 @@ const savePipeline = async () => {
   console.log(taskGrid.value)
   console.log(pipelineInfo)
   console.log(popupTask.value)
+  console.log(projectType)
   // 目标转换逻辑
 // 目标转换逻辑
   const backendJson = {
@@ -985,6 +987,7 @@ const savePipeline = async () => {
     app_name: repositoryInfo.appCode, // 示例固定值，或者从 pipelineInfo 动态设置
     env_name: pipelineInfo.environment, // 从 pipelineInfo 中获取环境
     build_script: "#!/bin/sh", // 示例固定值
+    project_type: projectType,
     k8s_namespace:  getEnvProperty(pipelineInfo.environment, 'namespace'), // 示例固定值
     k8s_cluster_name: getEnvProperty(pipelineInfo.environment, 'clusterName'), // 示例固定值
     // base_image: "registry.cn-hangzhou.aliyuncs.com/dyclouds/alpine:latest", // 示例固定值
@@ -994,7 +997,7 @@ const savePipeline = async () => {
     registry_url: `${popupTask.value.warehouse}/${popupTask.value.spatialName}`, // 示例固定值
     registry_user:  getRegistryCredentials(popupTask.value.warehouse).username, // 示例固定值
     registry_pass: getRegistryCredentials(popupTask.value.warehouse).password, // 示例固定值
-    git_url: "https://gitee.com/dycloud5416/spring-boot-helloWorld.git", // 示例固定值
+    git_url: repositoryInfo.url, // 示例固定值
     git_branch: "main", // 示例固定值
     repo_id: repositoryInfo.repoId,
     git_commit_id: "", // 示例固定值或动态值

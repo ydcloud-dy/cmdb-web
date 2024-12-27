@@ -345,7 +345,8 @@ const createPipeline = () => {
     name: "createPipeline", // 跳转的路由名称
     query: {
       appId: id, // 当前应用 ID
-      envCode:selectedEnvCode.value
+      envCode:selectedEnvCode.value,
+      projectType: appDetails.value.language
     },
   });
 }

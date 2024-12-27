@@ -1079,6 +1079,7 @@ const savePipeline = async () => {
   console.log(taskGrid.value)
   console.log(popupTask.value)
   console.log(OldData.value)
+  console.log(OldData.value.k8s_namespace)
   console.log("--------------------------------'")
   const backendJson = {
     ID: parseInt(id),
@@ -1086,16 +1087,16 @@ const savePipeline = async () => {
     app_name: repositoryInfo.appCode, // 示例固定值，或者从 pipelineInfo 动态设置
     env_name: OldData.value.env_name, // 从 pipelineInfo 中获取环境
     build_script: "#!/bin/sh", // 示例固定值
-    k8s_namespace:  getEnvProperty(pipelineInfo.environment, 'namespace'), // 示例固定值
-    k8s_cluster_name: OldData.value.k8s_cluster_name, // 示例固定值
-    // base_image: "registry.cn-hangzhou.aliyuncs.com/dyclouds/alpine:latest", // 示例固定值
+    k8s_namespace:  OldData.value.k8s_namespace,
+    k8s_cluster_name: OldData.value.k8s_cluster_name,
+    // base_image: "registry.cn-hangzhou.aliyuncs.com/dyclouds/alpine:latest",
     // dockerfile_path: "./Dockerfile", // 示例固定值
     // image_name: "yiyuetong", // 示例固定值
     // image_tag: "v1.0.0", // 示例固定值
-    registry_url: `${popupTask.value.warehouse}/${popupTask.value.spatialName}`, // 示例固定值
-    registry_user:  getRegistryCredentials(popupTask.value.warehouse).username, // 示例固定值
-    registry_pass: getRegistryCredentials(popupTask.value.warehouse).password, // 示例固定值
-    git_url: "https://gitee.com/dycloud5416/spring-boot-helloWorld.git", // 示例固定值
+    registry_url: `${popupTask.value.warehouse}/${popupTask.value.spatialName}`,
+    registry_user:  getRegistryCredentials(popupTask.value.warehouse).username,
+    registry_pass: getRegistryCredentials(popupTask.value.warehouse).password,
+    git_url: repositoryInfo.url, // 示例固定值
     git_branch: "main", // 示例固定值
     repo_id: repositoryInfo.repoId,
     git_commit_id: "", // 示例固定值或动态值
@@ -1116,16 +1117,10 @@ const savePipeline = async () => {
                     : task.name === "deploy"
                         ? "部署到Kubernetes"
                         : "",
-        image:
-            task.name === "deploy"
-                ? "swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/rancher/kubectl:v1.23.3"
-                : task.image || "",
+        image: task.image || "",
         script: task.textarea || "",
         spatial_name: task.spatialName || "",
-        warehouse:
-            task.name === "build-and-push"
-                ? "registry.cn-hangzhou.aliyuncs.com/dyclouds"
-                : task.warehouse || "",
+        warehouse: task.warehouse || "",
         mirror_tag: task.mirrorTag || "",
         dockerfile: task.dockerfile || "",
         context_path: task.contextPath || "",
@@ -1139,16 +1134,19 @@ const savePipeline = async () => {
       })),
     })),
   };
+  console.log(backendJson)
+
+  console.log("============================================================")
   // 查找匹配的 environmentOption
-  const environment = pipelineInfo.environment;
-  const matchedOption = pipelineInfo.environmentOptions.find(option => option.value === environment);
+  // const environment = pipelineInfo.environment;
+  // const matchedOption = pipelineInfo.environmentOptions.find(option => option.value === environment);
 // 如果找到匹配的环境，赋值 namespace
-  if (matchedOption) {
-    backendJson.k8s_namespace = matchedOption.namespace;
-  } else {
-    // 如果没有匹配项，可以设置一个默认值
-    backendJson.k8s_namespace = "default";
-  }
+//   if (matchedOption) {
+//     backendJson.k8s_namespace = matchedOption.namespace;
+//   } else {
+//     // 如果没有匹配项，可以设置一个默认值
+//     backendJson.k8s_namespace = "default";
+//   }
 
   let res;
   res = await updatePipelines(backendJson);
